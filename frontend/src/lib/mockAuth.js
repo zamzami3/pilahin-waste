@@ -81,4 +81,4 @@ function loginUser(email, password) {
   return user
 }
 
-export { ensureDefaults, getUsers, getCurrentUser, loginUser, logout, registerUser }
+export { ensureDefaults, getUsers, getCurrentUser, loginUser, logout, registerUser, saveCurrentUser }

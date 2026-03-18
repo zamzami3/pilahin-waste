@@ -14,6 +14,7 @@ import {
   Clock,
   BarChart2,
   Users,
+  User,
   Truck,
   DollarSign,
   LogOut,
@@ -62,14 +63,44 @@ export default function DashboardSidebar({ role = "warga" }) {
     return best
   }, null)
 
-  function handleLogout() {
-    // clear mock auth and redirect to login
+  async function handleLogout() {
+    // clear mock auth and redirect to login (robust fallback)
     try {
       logout()
     } catch (e) {
       // ignore
     }
-    router.push("/login")
+    try {
+      try { localStorage.removeItem('pilahin_user') } catch (e) {}
+      const maybePromise = router.push("/login")
+      if (maybePromise && typeof maybePromise.then === 'function') {
+        await maybePromise
+      } else {
+        // ensure navigation after short delay
+        setTimeout(() => { try { window.location.href = '/login' } catch (e) {} }, 350)
+      }
+    } catch (e) {
+      window.location.href = "/login"
+    }
+  }
+
+  function goTo(href) {
+    try {
+      const maybePromise = router.push(href)
+      if (maybePromise && typeof maybePromise.then === 'function') {
+        maybePromise.catch(() => {
+          window.location.href = href
+        })
+      } else {
+        setTimeout(() => {
+          if (window.location.pathname !== href) {
+            window.location.href = href
+          }
+        }, 250)
+      }
+    } catch (e) {
+      window.location.href = href
+    }
   }
 
   return (
@@ -86,7 +117,7 @@ export default function DashboardSidebar({ role = "warga" }) {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-forest-emerald text-white min-h-screen p-4 fixed left-0 top-0">
+      <aside className="hidden md:flex flex-col w-64 bg-forest-emerald text-white min-h-screen p-4 fixed left-0 top-0 z-[99999] pointer-events-auto">
         <div className="mb-6 text-xl font-bold">Pilahin</div>
 
         <nav className="flex-1 space-y-1">
@@ -97,9 +128,13 @@ export default function DashboardSidebar({ role = "warga" }) {
               <Link
                 key={it.href}
                 href={it.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors pointer-events-auto ${
                   isActive ? "bg-eco-green text-white font-semibold" : "text-white/90 hover:bg-eco-green/10"
                 }`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  goTo(it.href)
+                }}
               >
                 <Icon size={18} className={isActive ? "text-white" : "text-white/90"} />
                 <span>{it.label}</span>
@@ -108,8 +143,28 @@ export default function DashboardSidebar({ role = "warga" }) {
           })}
         </nav>
 
+        {/* Profile link placed above logout */}
+        <div className="mt-2">
+          {(() => {
+            const profileHref = `/${role}/profil`
+            const isActive = pathname === profileHref || pathname?.startsWith(profileHref + "/")
+            return (
+              <Link
+                href={profileHref}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors pointer-events-auto ${isActive ? 'bg-eco-green text-white font-semibold' : 'text-white/90 hover:bg-eco-green/10'}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  goTo(profileHref)
+                }}>
+                <User size={18} className={isActive ? 'text-white' : 'text-white/90'} />
+                <span>Akun Saya</span>
+              </Link>
+            )
+          })()}
+        </div>
+
         <div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-eco-green/10">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-eco-green/10 pointer-events-auto">
             <LogOut size={16} />
             Keluar
           </button>
@@ -140,13 +195,29 @@ export default function DashboardSidebar({ role = "warga" }) {
                     className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                       isActive ? "bg-eco-green text-white font-semibold" : "text-white/90 hover:bg-eco-green/10"
                     }`}
-                    onClick={() => setOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setOpen(false)
+                      goTo(it.href)
+                    }}
                   >
                     <Icon size={18} className={isActive ? "text-white" : "text-white/90"} />
                     <span>{it.label}</span>
                   </Link>
                 )
               })}
+
+              {/* Profile link for mobile drawer */}
+              {(() => {
+                const profileHref = `/${role}/profil`
+                const isActive = pathname === profileHref || pathname?.startsWith(profileHref + "/")
+                return (
+                  <Link key="profile-mobile" href={profileHref} onClick={(e) => { e.preventDefault(); setOpen(false); goTo(profileHref) }} className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${isActive ? 'bg-eco-green text-white font-semibold' : 'text-white/90 hover:bg-eco-green/10'}`}>
+                    <User size={18} className={isActive ? 'text-white' : 'text-white/90'} />
+                    <span>Akun Saya</span>
+                  </Link>
+                )
+              })()}
             </nav>
 
             <div className="mt-6">

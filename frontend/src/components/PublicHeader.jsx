@@ -22,8 +22,9 @@ export default function PublicHeader() {
     return () => window.removeEventListener('storage', onStorage)
   }, [pathname])
 
-  // hide public header when user is logged in
-  if (user) return null 
+  // hide public header on internal dashboard routes regardless of login state
+  // this ensures public header only appears on public pages
+  if (pathname?.startsWith('/warga') || pathname?.startsWith('/driver') || pathname?.startsWith('/admin')) return null
 
   return (
     <header className="bg-white shadow-sm">

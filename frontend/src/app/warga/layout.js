@@ -1,11 +1,14 @@
 import DashboardSidebar from '../../components/DashboardSidebar'
+import ClientErrorBoundary from '../../components/ClientErrorBoundary'
 
 export default function WargaLayout({ children }) {
   return (
     <div className="min-h-screen bg-mint-soft text-forest-emerald">
       <DashboardSidebar role="warga" />
       <div className="md:ml-64">
-        <main className="p-6 container mx-auto">{children}</main>
+        <ClientErrorBoundary>
+          <main className="p-6 container mx-auto">{children}</main>
+        </ClientErrorBoundary>
       </div>
     </div>
   )

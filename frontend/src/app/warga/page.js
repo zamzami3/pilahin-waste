@@ -16,6 +16,8 @@ export default function WargaHome() {
     setUser(u)
   }, [])
 
+  
+
   // Next pickup: 3 days from now at 07:00
   const [timeLeft, setTimeLeft] = useState(0)
   const nextPickup = new Date()

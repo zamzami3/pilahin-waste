@@ -1,6 +1,14 @@
+"use client"
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function PublicFooter() {
+  const pathname = usePathname()
+
+  // hide footer on internal app routes
+  if (pathname?.startsWith('/warga') || pathname?.startsWith('/driver') || pathname?.startsWith('/admin')) return null
+
   return (
     <footer className="bg-slate-gray py-10">
       <div className="container mx-auto px-6 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
