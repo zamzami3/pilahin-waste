@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { MapPin, ClipboardList, Scale, Coins, Activity, BarChart3 } from "lucide-react"
 import { initialTasks } from "./initialTasks"
+import StyledSelect from "../../components/StyledSelect"
 
 const trendWeightData = [
   { day: "Sen", kg: 2.4 },
@@ -224,11 +225,12 @@ export default function DriverDashboard() {
               </div>
 
               <div>
-                <label className="text-sm">Kategori</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-md">
-                  <option>Organik</option>
-                  <option>Anorganik</option>
-                </select>
+                <StyledSelect
+                  label="Kategori"
+                  value={category}
+                  onValueChange={setCategory}
+                  options={["Organik", "Anorganik"]}
+                />
               </div>
             </div>
 

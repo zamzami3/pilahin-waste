@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ensureDefaults, registerUser } from '../../lib/mockAuth'
+import StyledSelect from "../../components/StyledSelect"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -55,14 +56,16 @@ export default function RegisterPage() {
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="w-full mt-1 px-3 py-2 border rounded-md" />
         </label>
 
-        <label className="block text-sm">
-          Role
-          <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-md">
-            <option value="warga">Warga</option>
-            <option value="driver">Driver</option>
-            <option value="admin">Admin</option>
-          </select>
-        </label>
+        <StyledSelect
+          label="Role"
+          value={role}
+          onValueChange={setRole}
+          options={[
+            { value: "warga", label: "Warga" },
+            { value: "driver", label: "Driver" },
+            { value: "admin", label: "Admin" },
+          ]}
+        />
 
         <div className="flex items-center justify-between">
           <button type="submit" className="bg-eco-green text-white px-4 py-2 rounded-md font-semibold">Daftar</button>

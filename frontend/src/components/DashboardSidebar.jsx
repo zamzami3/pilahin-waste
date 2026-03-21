@@ -47,7 +47,7 @@ export default function DashboardSidebar({ role = "warga" }) {
       { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
       { label: "Manajemen User", href: "/admin/users", icon: Users },
       { label: "Armada", href: "/admin/armada", icon: Truck },
-      { label: "Keuangan", href: "/admin/keuangan", icon: DollarSign },
+      { label: "Keuangan", href: "/admin/finance", icon: DollarSign },
     ],
   }
 
