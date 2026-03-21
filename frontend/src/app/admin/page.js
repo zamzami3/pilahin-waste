@@ -160,7 +160,7 @@ export default function AdminHome() {
       {/* Quick links */}
       <section className="flex flex-wrap gap-3">
         <Link href="/admin/users" className="px-4 py-2 rounded-md bg-white shadow">Manajemen User</Link>
-        <Link href="/admin/keuangan" className="px-4 py-2 rounded-md bg-white shadow">Laporan Keuangan</Link>
+        <Link href="/admin/finance" className="px-4 py-2 rounded-md bg-white shadow">Laporan Keuangan</Link>
         <Link href="/admin/armada" className="px-4 py-2 rounded-md bg-white shadow">Manajemen Armada</Link>
         <Link href="/admin/settings" className="px-4 py-2 rounded-md bg-white shadow">Pengaturan API Token</Link>
       </section>
