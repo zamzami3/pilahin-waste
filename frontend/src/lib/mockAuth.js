@@ -1,9 +1,7 @@
 // Simple mock auth helper that stores users and current user in localStorage
 
 const DEFAULT_USERS = [
-  { id: 1, name: 'Warga Sample', email: 'warga@example.com', password: 'warga123', role: 'warga' },
-  { id: 2, name: 'Driver Sample', email: 'driver@example.com', password: 'driver123', role: 'driver' },
-  { id: 3, name: 'Admin Sample', email: 'admin@example.com', password: 'admin123', role: 'admin' },
+  // Start empty: demo/sample credentials are managed in backend database.
 ]
 
 function isBrowser() {
@@ -60,12 +58,15 @@ function logout() {
 
 function registerUser({ name, email, password, role }) {
   if (!isBrowser()) throw new Error('Registrasi hanya tersedia di client')
+  if (role && role !== 'warga') {
+    throw new Error('Registrasi hanya untuk role warga')
+  }
   const users = _getStoredUsers()
   if (users.find((u) => u.email === email)) {
     throw new Error('Email sudah terdaftar')
   }
   const id = users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1
-  const newUser = { id, name, email, password, role }
+  const newUser = { id, name, email, password, role: 'warga' }
   users.push(newUser)
   _saveUsers(users)
   saveCurrentUser(newUser)

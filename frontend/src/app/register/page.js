@@ -4,14 +4,12 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ensureDefaults, registerUser } from '../../lib/mockAuth'
-import StyledSelect from "../../components/StyledSelect"
 
 export default function RegisterPage() {
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState('warga')
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -22,12 +20,8 @@ export default function RegisterPage() {
     e.preventDefault()
     setError("")
     try {
-      const user = registerUser({ name: name.trim(), email: email.trim(), password, role })
-      // redirect user to their dashboard
-      if (user.role === 'warga') router.push('/warga')
-      else if (user.role === 'driver') router.push('/driver/tasks')
-      else if (user.role === 'admin') router.push('/admin')
-      else router.push('/')
+      registerUser({ name: name.trim(), email: email.trim(), password, role: 'warga' })
+      router.push('/warga')
     } catch (err) {
       setError(err.message || 'Gagal registrasi')
     }
@@ -36,7 +30,7 @@ export default function RegisterPage() {
   return (
     <div className="p-6 max-w-lg mx-auto">
       <h1 className="text-2xl font-semibold mb-2">Daftar</h1>
-      <p className="text-sm text-slate-600 mb-4">Buat akun baru untuk mengakses dashboard.</p>
+      <p className="text-sm text-slate-600 mb-4">Registrasi hanya tersedia untuk akun warga.</p>
 
       <form onSubmit={handleSubmit} className="bg-white p-4 rounded-md shadow-sm space-y-3">
         {error && <div className="text-sm text-red-600">{error}</div>}
@@ -56,16 +50,9 @@ export default function RegisterPage() {
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="w-full mt-1 px-3 py-2 border rounded-md" />
         </label>
 
-        <StyledSelect
-          label="Role"
-          value={role}
-          onValueChange={setRole}
-          options={[
-            { value: "warga", label: "Warga" },
-            { value: "driver", label: "Driver" },
-            { value: "admin", label: "Admin" },
-          ]}
-        />
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          Role akun: <span className="font-semibold text-forest-emerald">Warga</span>
+        </div>
 
         <div className="flex items-center justify-between">
           <button type="submit" className="bg-eco-green text-white px-4 py-2 rounded-md font-semibold">Daftar</button>
