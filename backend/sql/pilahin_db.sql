@@ -79,7 +79,8 @@ VALUES
   (
     'Warga Sample',
     'warga@example.com',
-    '$2b$10$33PcYgVSfOFflAtmn92gfuTje8iecEPlGokQ5ZHQ7pySH3sFR9am.',
+    -- password: warga123
+    '$2b$10$LfkvgR2Ej4WnSBAZfnfD4uciq8GbU25Ps277PF0vDhSJypkhSZoXa',
     '081234567890',
     'warga',
     'Jl. Melati No. 10',
@@ -89,7 +90,8 @@ VALUES
   (
     'Driver Sample',
     'driver@example.com',
-    '$2b$10$lNeOJPgWtCUPBxQ.E7ieGOf47kOIqxTZwdyTxBQ9PJmC3xIIthmFm',
+    -- password: driver123
+    '$2b$10$h/iBUHAFmSYXZQ7BV1Vg6Ougsrz563f6Qhty9U2geiz63OJf/Sw8q',
     '081234567891',
     'driver',
     'Pool Armada Pilahin',
@@ -99,7 +101,8 @@ VALUES
   (
     'Admin Sample',
     'admin@example.com',
-    '$2b$10$aMdid.CezdKIsLh/fU9z8uX07nIhep5s21FV32CmLP//n/ZMg1uJe',
+    password: admin123
+    '$2b$10$tUwKY204rCt99gFHvIjb3enWOk4usKqMz3AvEJ8ixxCD7tGYytFnu',
     '081234567892',
     'admin',
     'Kantor Pusat Pilahin',
