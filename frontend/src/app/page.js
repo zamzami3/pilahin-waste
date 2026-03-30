@@ -1,24 +1,55 @@
+"use client"
+
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import {
   User,
   Clipboard,
   Truck,
+  Trash2,
   Users,
   BarChart2,
+  BarChart3,
+  ArrowRight,
   Gift,
-  MessageSquare,
 } from "lucide-react"
+import { getPublishedArticles, seedArticlesIfNeeded } from "../lib/articleStore"
+import AnimatedStatValue from "../components/AnimatedStatValue"
 
 const stats = [
-  { label: "Total Warga", value: "12.342", icon: Users },
-  { label: "Sampah Terolah", value: "24.500 kg", icon: BarChart2 },
-  { label: "Poin Terbagi", value: "48.900", icon: Gift },
+  { label: "Total Warga", value: 12342, icon: Users },
+  { label: "Sampah Terolah", value: 24500, suffix: "kg", icon: BarChart2 },
+  { label: "Poin Terbagi", value: 48900, icon: Gift },
 ]
 
 const steps = [
   { title: "Daftar", desc: "Buat akun dan pilih paket langganan.", icon: User },
   { title: "Pilah", desc: "Pisahkan sampah organik & anorganik sesuai panduan.", icon: Clipboard },
   { title: "Jemput", desc: "Kurir kami menjemput sesuai jadwal Anda.", icon: Truck },
+]
+
+const featuredServices = [
+  {
+    title: "Pilah Sampah dari Rumah",
+    desc: "Setor sampah terpilah dan dapatkan poin menarik.",
+    cta: "Selengkapnya",
+    href: "/warga",
+    icon: Trash2,
+  },
+  {
+    title: "Ambil Tugas Penjemputan",
+    desc: "Lihat tugas hari ini, ikuti rute efisien, dan input berat sampah.",
+    cta: "Selengkapnya",
+    href: "/driver",
+    icon: Truck,
+  },
+  {
+    title: "Pantau Seluruh Operasional",
+    desc: "Lihat analytics, kelola user, armada, dan laporan keuangan.",
+    cta: "Selengkapnya",
+    href: "/admin",
+    icon: BarChart3,
+  },
 ]
 
 const pricing = [
@@ -48,6 +79,15 @@ const areas = [
 ]
 
 export default function HomePage() {
+  const [featuredArticles, setFeaturedArticles] = useState(() =>
+    getPublishedArticles(seedArticlesIfNeeded()).slice(0, 3)
+  )
+
+  useEffect(() => {
+    const seeded = seedArticlesIfNeeded()
+    setFeaturedArticles(getPublishedArticles(seeded).slice(0, 3))
+  }, [])
+
   return (
     <main className="w-full">
       {/* Hero */}
@@ -74,6 +114,100 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Layanan Unggulan */}
+      <section className="py-14">
+        <div className="container mx-auto px-6 md:px-8">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4332]">Layanan Unggulan Kami</h2>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredServices.map((service) => {
+              const Icon = service.icon
+              return (
+                <article
+                  key={service.title}
+                  className="bg-white border border-[#2D6A4F]/40 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#2D6A4F]/10 text-[#2D6A4F] flex items-center justify-center">
+                    <Icon size={22} />
+                  </div>
+
+                  <h3 className="mt-5 text-xl font-semibold text-[#1B1B1B]">{service.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-[#1B1B1B]/80">{service.desc}</p>
+
+                  <Link
+                    href={service.href}
+                    className="mt-6 inline-flex items-center rounded-full border border-[#2D6A4F] px-4 py-2 text-sm font-semibold text-[#2D6A4F] transition-colors duration-200 hover:bg-[#2D6A4F] hover:text-white"
+                  >
+                    {service.cta}
+                  </Link>
+                </article>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Artikel Pilihan */}
+      <section className="py-16">
+        <div className="container mx-auto px-6 md:px-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-forest-emerald">Artikel Pilihan</h2>
+              <p className="mt-2 text-slate-600">Wawasan seputar pengelolaan sampah dan operasional Pilahin.</p>
+            </div>
+            <Link href="/artikel" className="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-eco-green hover:underline">
+              Lihat Semua
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredArticles.length === 0 ? (
+              <div className="md:col-span-3 rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+                Belum ada artikel yang dipublikasikan admin.
+              </div>
+            ) : (
+              featuredArticles.map((article) => (
+                <article
+                  key={article.title}
+                  className="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="h-44 w-full bg-slate-100 overflow-hidden">
+                    <img
+                      src={article.image}
+                      alt={article.alt}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <div className="p-6">
+                    <p className="text-xs tracking-wide text-slate-500 font-semibold">{article.category}</p>
+                    <h3 className="mt-3 text-2xl leading-tight font-semibold text-[#1B1B1B]">{article.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{article.desc}</p>
+
+                    <Link
+                      href={`/artikel/${article.slug}`}
+                      className="mt-5 inline-flex items-center gap-2 text-base font-semibold uppercase tracking-wide text-eco-green"
+                    >
+                      Pelajari Lebih Lanjut
+                      <ArrowRight size={18} />
+                    </Link>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="mt-6 md:hidden">
+            <Link href="/artikel" className="inline-flex items-center gap-2 text-sm font-semibold text-eco-green hover:underline">
+              Lihat Semua
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Stats */}
       <section className="py-12 bg-slate-gray">
         <div className="container mx-auto px-6 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -86,34 +220,13 @@ export default function HomePage() {
                 </div>
                 <div>
                   <div className="text-sm text-slate-500">{s.label}</div>
-                  <div className="text-2xl font-semibold text-forest-emerald">{s.value}</div>
+                  <div className="text-2xl font-semibold text-forest-emerald">
+                    <AnimatedStatValue value={s.value} suffix={s.suffix} />
+                  </div>
                 </div>
               </div>
             )
           })}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="py-16">
-        <div className="container mx-auto px-6 md:px-8">
-          <h2 className="text-2xl font-bold text-forest-emerald">Cara Kerjanya</h2>
-          <p className="text-slate-600 mt-2">Langkah sederhana untuk mulai mendapatkan manfaat dari sampahmu.</p>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {steps.map((st) => {
-              const Icon = st.icon
-              return (
-                <div key={st.title} className="bg-white rounded-xl p-6 shadow-sm text-center">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-forest-emerald/5 text-forest-emerald flex items-center justify-center">
-                    <Icon size={20} />
-                  </div>
-                  <h3 className="mt-4 font-semibold text-forest-emerald">{st.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{st.desc}</p>
-                </div>
-              )
-            })}
-          </div>
         </div>
       </section>
 
