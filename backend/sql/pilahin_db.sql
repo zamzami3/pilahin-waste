@@ -77,18 +77,40 @@ CREATE INDEX idx_point_history_user_id ON point_history (user_id);
 INSERT INTO users (nama, email, password, no_wa, role, alamat, lat_long, saldo_poin)
 VALUES
   (
-    'Warga Sample',
-    'warga@example.com',
+    'Warga 1',
+    'warga1@example.com',
     -- password: warga123
     '$2b$10$LfkvgR2Ej4WnSBAZfnfD4uciq8GbU25Ps277PF0vDhSJypkhSZoXa',
     '081234567890',
     'warga',
     'Jl. Melati No. 10',
     '-6.2088,106.8456',
-    120
+    0
   ),
   (
-    'Driver Sample',
+    'Warga 2',
+    'warga2@example.com',
+    -- password: warga456
+    '$2b$10$1Ar4Rq9UZG26Ds8ie8O9dudgORvrfvzxCKTDFkrAPuRQ9gHYf0i5C',
+    '081234567893',
+    'warga',
+    'Jl. Cempaka No. 21',
+    '-6.2035,106.8431',
+    0
+  ),
+  (
+    'Warga 3',
+    'warga3@example.com',
+    -- password: warga789
+    '$2b$10$sFHovY/Cs5VaCaCanXrbKu9uxGSUrxjnUJ2BLRE1EAdSYaTlqHenq',
+    '081234567894',
+    'warga',
+    'Jl. Kenanga No. 7',
+    '-6.2102,106.8514',
+    0
+  ),
+  (
+    'Driver 1',
     'driver@example.com',
     -- password: driver123
     '$2b$10$h/iBUHAFmSYXZQ7BV1Vg6Ougsrz563f6Qhty9U2geiz63OJf/Sw8q',
@@ -99,9 +121,9 @@ VALUES
     0
   ),
   (
-    'Admin Sample',
+    'Admin Utama',
     'admin@example.com',
-    password: admin123
+    -- password: admin123
     '$2b$10$tUwKY204rCt99gFHvIjb3enWOk4usKqMz3AvEJ8ixxCD7tGYytFnu',
     '081234567892',
     'admin',
