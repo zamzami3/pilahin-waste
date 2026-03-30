@@ -1,21 +1,16 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { getCurrentUser } from "../../../lib/mockAuth"
+import { getCurrentUser, saveCurrentUser } from "../../../lib/mockAuth"
 import { Calendar } from "lucide-react"
 
 const DAYS_ORDER = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
 const NAME_TO_INDEX = { Minggu: 0, Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6 }
 
 function getPickupDaysFromUser(user) {
-  if (!user) return ["Selasa", "Jumat"]
+  if (!user) return []
   if (Array.isArray(user.pickupDays) && user.pickupDays.length) return user.pickupDays
-  if (user.paket) {
-    const p = String(user.paket).toLowerCase()
-    if (p.includes("premium")) return ["Senin", "Rabu", "Jumat"]
-    if (p.includes("mingguan")) return ["Sabtu"]
-  }
-  return ["Selasa", "Jumat"]
+  return []
 }
 
 function computeNextPickupDate(pickupDays) {
@@ -54,6 +49,7 @@ export default function JadwalPage() {
   const [nextPickup, setNextPickup] = useState(null)
   const [timeLeft, setTimeLeft] = useState("")
   const [reminderEnabled, setReminderEnabled] = useState(false)
+  const [message, setMessage] = useState(null)
 
   useEffect(() => {
     const u = getCurrentUser()
@@ -94,11 +90,43 @@ export default function JadwalPage() {
     localStorage.setItem(key, String(next))
   }
 
+  function togglePickupDay(day) {
+    setPickupDays((prev) => {
+      if (prev.includes(day)) return prev.filter((d) => d !== day)
+      return [...prev, day]
+    })
+  }
+
+  function savePickupSchedule() {
+    if (!user) {
+      setMessage({ type: "error", text: "Silakan login terlebih dahulu." })
+      return
+    }
+
+    const sorted = [...pickupDays].sort((a, b) => DAYS_ORDER.indexOf(a) - DAYS_ORDER.indexOf(b))
+    const updatedUser = { ...user, pickupDays: sorted }
+    try {
+      saveCurrentUser(updatedUser)
+      setUser(updatedUser)
+      const next = computeNextPickupDate(sorted)
+      setNextPickup(next)
+      setMessage({ type: "success", text: "Jadwal penjemputan berhasil diajukan." })
+    } catch (e) {
+      setMessage({ type: "error", text: "Gagal menyimpan jadwal penjemputan." })
+    }
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-6 bg-mint-soft">
       <header className="max-w-5xl mx-auto mb-6">
         <h1 className="text-2xl font-semibold text-forest-emerald">Jadwal Penjemputan Saya</h1>
-        <p className="text-sm text-slate-700">Lihat jadwal penjemputan berdasarkan paket langganan Anda.</p>
+        <p className="text-sm text-slate-700">Ajukan dan kelola jadwal penjemputan sesuai kebutuhan Anda.</p>
+
+        {message && (
+          <div className={`mt-3 p-3 rounded-md ${message.type === "success" ? "bg-eco-green/10 text-eco-green" : "bg-red-100 text-red-700"}`}>
+            {message.text}
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -106,8 +134,8 @@ export default function JadwalPage() {
               <Calendar size={20} className="text-eco-green" />
               <div>
                 <div className="text-sm text-slate-500">Paket Langganan</div>
-                <div className="font-semibold text-forest-emerald">{user?.paket ?? "Reguler"}</div>
-                <div className="text-xs text-slate-500">Hari aktif: {pickupDays.join(", ")}</div>
+                <div className="font-semibold text-forest-emerald">{user?.paket ?? "Belum Berlangganan"}</div>
+                <div className="text-xs text-slate-500">Hari aktif: {pickupDays.length ? pickupDays.join(", ") : "Belum ada"}</div>
               </div>
             </div>
           </div>
@@ -115,8 +143,8 @@ export default function JadwalPage() {
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="text-sm text-slate-500">Penjemputan Berikutnya</div>
             <div className="mt-1">
-              <div className="text-xl font-semibold text-forest-emerald">{nextPickup ? new Date(nextPickup).toLocaleString("id-ID", { weekday: "long", day: "numeric", month: "short" }) : "-"}</div>
-              <div className="text-sm text-slate-600">{timeLeft}</div>
+              <div className="text-xl font-semibold text-forest-emerald">{nextPickup ? new Date(nextPickup).toLocaleString("id-ID", { weekday: "long", day: "numeric", month: "short" }) : "Belum ada jadwal"}</div>
+              <div className="text-sm text-slate-600">{nextPickup ? timeLeft : "Ajukan jadwal terlebih dahulu"}</div>
             </div>
           </div>
 
@@ -149,6 +177,29 @@ export default function JadwalPage() {
                 </div>
               )
             })}
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-base font-semibold text-forest-emerald">Ajukan Jadwal Penjemputan</h3>
+            <p className="text-sm text-slate-600 mt-1">Pilih hari yang Anda inginkan, lalu simpan pengajuan jadwal.</p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {DAYS_ORDER.map((day) => {
+                const selected = pickupDays.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => togglePickupDay(day)}
+                    className={`px-3 py-2 rounded-md border text-sm ${selected ? "bg-eco-green text-white border-eco-green" : "bg-white text-slate-700 border-slate-300"}`}
+                  >
+                    {day}
+                  </button>
+                )
+              })}
+            </div>
+
+            <button onClick={savePickupSchedule} className="mt-4 px-4 py-2 rounded-md bg-eco-green text-white font-semibold">Simpan Jadwal</button>
           </div>
         </section>
       </main>

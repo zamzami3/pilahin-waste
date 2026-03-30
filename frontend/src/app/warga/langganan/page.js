@@ -22,11 +22,7 @@ export default function LanggananPage() {
     setUser(u)
 
     if (u?.paketExpiry) setExpiry(new Date(u.paketExpiry))
-    else {
-      const d = new Date()
-      d.setDate(d.getDate() + 30)
-      setExpiry(d)
-    }
+    else setExpiry(null)
 
     if (u) {
       const raw = localStorage.getItem(`pilahin_payments_${u.id}`)
@@ -42,6 +38,10 @@ export default function LanggananPage() {
   function perpanjang() {
     if (!user) {
       setMessage({ type: "error", text: "Silakan login terlebih dahulu." })
+      return
+    }
+    if (!user?.paket) {
+      setMessage({ type: "info", text: "Anda belum berlangganan. Silakan pilih paket terlebih dahulu." })
       return
     }
     const paket = user.paket || "Reguler"
@@ -89,9 +89,9 @@ export default function LanggananPage() {
             <div className="text-sm text-slate-500">Paket Saat Ini</div>
             <div className="mt-2 flex items-center justify-between">
               <div>
-                <div className="text-xl font-bold text-forest-emerald">{user?.paket ?? "Reguler"}</div>
+                <div className="text-xl font-bold text-forest-emerald">{user?.paket ?? "Belum Berlangganan"}</div>
                 <div className="text-sm text-slate-600 mt-1">Berlaku sampai: {expiry ? expiry.toLocaleDateString("id-ID") : "-"}</div>
-                <div className="text-xs text-slate-500 mt-2">Fitur: Jadwal penjemputan, poin, dan batas berat sesuai paket.</div>
+                <div className="text-xs text-slate-500 mt-2">{user?.paket ? "Fitur: Jadwal penjemputan, poin, dan batas berat sesuai paket." : "Anda belum memiliki paket aktif."}</div>
               </div>
             </div>
 

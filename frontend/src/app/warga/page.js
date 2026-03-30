@@ -1,30 +1,78 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Gift, Truck, CreditCard, Calendar, Clock, Zap } from "lucide-react"
-import { getCurrentUser } from "../../lib/mockAuth"
+import { getCurrentUser, saveCurrentUser } from "../../lib/mockAuth"
+
+const NAME_TO_INDEX = { Minggu: 0, Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6 }
+
+function computeNextPickupDate(pickupDays = []) {
+  if (!Array.isArray(pickupDays) || pickupDays.length === 0) return null
+  const now = new Date()
+  const todayIndex = now.getDay()
+  const indices = pickupDays.map((d) => NAME_TO_INDEX[d]).filter((v) => Number.isInteger(v))
+  if (indices.length === 0) return null
+  let best = null
+  for (const idx of indices) {
+    const candidate = new Date(now)
+    let daysUntil = (idx - todayIndex + 7) % 7
+    candidate.setDate(now.getDate() + daysUntil)
+    candidate.setHours(8, 0, 0, 0)
+    if (candidate <= now) {
+      candidate.setDate(candidate.getDate() + 7)
+    }
+    if (!best || candidate < best) best = candidate
+  }
+  return best
+}
 
 export default function WargaHome() {
   const [user, setUser] = useState(null)
-  const [points, setPoints] = useState(120)
-  const [savedKg, setSavedKg] = useState(75)
-  const [subscriptionStatus] = useState("Aktif")
-  const [subscriptionPackage] = useState("Paket Gold")
+  const [points, setPoints] = useState(0)
+  const [savedKg, setSavedKg] = useState(0)
+  const [subscriptionStatus, setSubscriptionStatus] = useState("Belum Berlangganan")
+  const [subscriptionPackage, setSubscriptionPackage] = useState("-")
 
   useEffect(() => {
     const u = getCurrentUser()
     setUser(u)
+    const userPoints = Number(u?.points ?? u?.saldo_poin ?? 0)
+    setPoints(Number.isFinite(userPoints) ? userPoints : 0)
+
+    if (u?.paket) {
+      setSubscriptionPackage(u.paket)
+      setSubscriptionStatus("Aktif")
+    } else {
+      setSubscriptionPackage("-")
+      setSubscriptionStatus("Belum Berlangganan")
+    }
+
+    if (u?.id) {
+      const rawReports = localStorage.getItem(`pilahin_reports_${u.id}`)
+      if (rawReports) {
+        try {
+          const reports = JSON.parse(rawReports)
+          const donePickup = Array.isArray(reports)
+            ? reports.filter((r) => (r.type || "").toLowerCase().includes("penjemputan") && (r.status || "").toLowerCase() === "selesai")
+            : []
+          const totalKg = donePickup.reduce((acc, item) => acc + Number(item.kg || 0), 0)
+          setSavedKg(Number.isFinite(totalKg) ? totalKg : 0)
+        } catch (e) {
+          setSavedKg(0)
+        }
+      }
+    }
   }, [])
 
-  
-
-  // Next pickup: 3 days from now at 07:00
+  const nextPickup = computeNextPickupDate(user?.pickupDays || [])
   const [timeLeft, setTimeLeft] = useState(0)
-  const nextPickup = new Date()
-  nextPickup.setDate(nextPickup.getDate() + 3)
-  nextPickup.setHours(7, 0, 0, 0)
 
   useEffect(() => {
+    if (!nextPickup) {
+      setTimeLeft(0)
+      return
+    }
     function update() {
       const now = Date.now()
       const distance = nextPickup.getTime() - now
@@ -51,14 +99,34 @@ export default function WargaHome() {
     })
   }
 
-  // Recent activity sample
-  const [activities, setActivities] = useState([
-    { id: 1, date: new Date('2026-03-10T07:00:00'), kg: 5.2, type: 'Penjemputan', status: 'Selesai' },
-    { id: 2, date: new Date('2026-03-03T07:00:00'), kg: 4.1, type: 'Penjemputan', status: 'Selesai' },
-    { id: 3, date: new Date('2026-02-24T07:00:00'), kg: 6.0, type: 'Penjemputan', status: 'Selesai' },
-    { id: 4, date: new Date('2026-02-17T07:00:00'), kg: 3.5, type: 'Penjemputan', status: 'Selesai' },
-    { id: 5, date: new Date('2026-02-10T07:00:00'), kg: 2.8, type: 'Penjemputan', status: 'Selesai' },
-  ])
+  const [activities, setActivities] = useState([])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setActivities([])
+      return
+    }
+    const rawReports = localStorage.getItem(`pilahin_reports_${user.id}`)
+    if (!rawReports) {
+      setActivities([])
+      return
+    }
+    try {
+      const reports = JSON.parse(rawReports)
+      const mapped = Array.isArray(reports)
+        ? reports.slice(0, 5).map((item) => ({
+          id: item.id || Date.now(),
+          date: new Date(item.date),
+          kg: item.kg ?? null,
+          type: item.type || item.jenis || "Laporan",
+          status: item.status || "Diproses",
+        }))
+        : []
+      setActivities(mapped)
+    } catch (e) {
+      setActivities([])
+    }
+  }, [user])
 
   const [showReportModal, setShowReportModal] = useState(false)
   const [reporting, setReporting] = useState(false)
@@ -92,7 +160,13 @@ export default function WargaHome() {
 
   function handleRedeem() {
     if (points >= 100) {
-      setPoints((p) => p - 100)
+      const nextPoints = points - 100
+      setPoints(nextPoints)
+      if (user) {
+        const updated = { ...user, points: nextPoints, saldo_poin: nextPoints }
+        setUser(updated)
+        saveCurrentUser(updated)
+      }
       alert('Berhasil menukar hadiah! Poin -100')
     } else {
       alert('Poin tidak cukup untuk menukar hadiah (butuh 100).')
@@ -162,25 +236,27 @@ export default function WargaHome() {
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-lg font-semibold">Penjemputan Berikutnya</h3>
-              <p className="text-sm text-slate-500 mt-1">Jadwal penjemputan sampah Anda berikutnya.</p>
+              <p className="text-sm text-slate-500 mt-1">Jadwal penjemputan berikutnya berdasarkan pengajuan Anda.</p>
             </div>
             <div className="text-right">
               <div className="text-xs text-slate-400">Tanggal</div>
-              <div className="font-semibold text-forest-emerald">{formatDate(nextPickup)}</div>
+              <div className="font-semibold text-forest-emerald">{nextPickup ? formatDate(nextPickup) : 'Belum ada jadwal'}</div>
             </div>
           </div>
 
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="bg-forest-emerald/5 text-forest-emerald px-4 py-2 rounded-lg font-mono text-lg">
-                {String(days).padStart(2, '0')}d {String(hours).padStart(2, '0')}j {String(minutes).padStart(2, '0')}m {String(seconds).padStart(2, '0')}s
+                {nextPickup
+                  ? `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}j ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`
+                  : 'Belum terjadwal'}
               </div>
-              <div className="text-sm text-slate-500">Estimasi waktu sampai penjemputan</div>
+              <div className="text-sm text-slate-500">{nextPickup ? 'Estimasi waktu sampai penjemputan' : 'Ajukan jadwal jemput terlebih dahulu'}</div>
             </div>
 
             <div className="flex items-center gap-3">
               <button onClick={openReportModal} className="bg-eco-green text-white px-6 py-3 rounded-full text-base font-semibold shadow-md hover:brightness-95">Lapor Sampah Penuh</button>
-              <button className="bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm text-forest-emerald hover:bg-slate-50"><Calendar size={16} className="inline mr-2" /> Lihat Kalender</button>
+              <Link href="/warga/jadwal" className="bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm text-forest-emerald hover:bg-slate-50"><Calendar size={16} className="inline mr-2" /> Ajukan Jadwal</Link>
             </div>
           </div>
         </div>
@@ -216,18 +292,24 @@ export default function WargaHome() {
               </tr>
             </thead>
             <tbody>
-              {activities.map((a) => (
-                <tr key={a.id} className="border-t">
-                  <td className="py-3 text-sm text-slate-600">{a.date.toLocaleDateString('id-ID')} {a.date.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</td>
-                  <td className="py-3 text-sm text-slate-600">{a.type}</td>
-                  <td className="py-3 text-sm text-slate-600">{a.kg ? `${a.kg} kg` : '-'}</td>
-                  <td className="py-3 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs ${a.status === 'Selesai' ? 'bg-forest-emerald/80 text-white' : a.status === 'Pending' ? 'bg-yellow-400 text-black' : 'bg-slate-300 text-black'}`}>
-                      {a.status}
-                    </span>
-                  </td>
+              {activities.length === 0 ? (
+                <tr className="border-t">
+                  <td colSpan={4} className="py-4 text-sm text-slate-500">Belum ada aktivitas.</td>
                 </tr>
-              ))}
+              ) : (
+                activities.map((a) => (
+                  <tr key={a.id} className="border-t">
+                    <td className="py-3 text-sm text-slate-600">{a.date.toLocaleDateString('id-ID')} {a.date.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</td>
+                    <td className="py-3 text-sm text-slate-600">{a.type}</td>
+                    <td className="py-3 text-sm text-slate-600">{a.kg ? `${a.kg} kg` : '-'}</td>
+                    <td className="py-3 text-sm">
+                      <span className={`px-3 py-1 rounded-full text-xs ${a.status === 'Selesai' ? 'bg-forest-emerald/80 text-white' : a.status === 'Pending' ? 'bg-yellow-400 text-black' : 'bg-slate-300 text-black'}`}>
+                        {a.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

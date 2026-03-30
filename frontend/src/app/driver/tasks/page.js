@@ -3,42 +3,7 @@
 import { useEffect, useState } from "react"
 import { MapPin, Navigation, CheckCircle2, Clock3, X, User, Camera } from "lucide-react"
 import FilePicker from "../../../components/FilePicker"
-
-const initialTasks = [
-  {
-    id: 1,
-    name: "Ibu Sari",
-    address: "Jl. Merdeka No.12, Kecamatan A",
-    note: "Sampah organik + plastik",
-    lat: -6.200392,
-    lng: 106.816048,
-    status: "pending",
-    weight: null,
-    proofPhotoName: "",
-  },
-  {
-    id: 2,
-    name: "Bapak Anton",
-    address: "Perumahan B, Blok C3",
-    note: "Rumah tangga - Kode 22",
-    lat: -6.201234,
-    lng: 106.817123,
-    status: "pending",
-    weight: null,
-    proofPhotoName: "",
-  },
-  {
-    id: 3,
-    name: "Bu Wati",
-    address: "Pasar Tradisional, Kios 5-6",
-    note: "Sampah basah + kertas",
-    lat: -6.202345,
-    lng: 106.818234,
-    status: "on-process",
-    weight: null,
-    proofPhotoName: "",
-  },
-]
+import { initialTasks } from "../initialTasks"
 
 function statusLabel(s) {
   if (s === "pending") return "Pending"
@@ -142,68 +107,74 @@ export default function DriverTasksPage() {
       </header>
 
       <section className="mt-5 grid grid-cols-1 gap-4">
-        {tasks.map((task) => (
-          <article key={task.id} className="rounded-xl border border-eco-green/15 bg-white p-4 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 rounded-lg bg-eco-green/10 p-2 text-eco-green">
-                  <User size={20} />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-forest-emerald">{task.name}</h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <p className="text-sm text-slate-600">{task.address}</p>
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${badgeClass(task.status)}`}>
-                      {statusLabel(task.status)}
-                    </span>
+        {tasks.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+            Belum ada daftar penjemputan untuk hari ini.
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <article key={task.id} className="rounded-xl border border-eco-green/15 bg-white p-4 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 rounded-lg bg-eco-green/10 p-2 text-eco-green">
+                    <User size={20} />
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">{task.note}</p>
-                  <p className="mt-1 text-xs text-slate-500">Lat/Lng: {task.lat.toFixed(6)}, {task.lng.toFixed(6)}</p>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold text-forest-emerald">{task.name}</h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="text-sm text-slate-600">{task.address}</p>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${badgeClass(task.status)}`}>
+                        {statusLabel(task.status)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">{task.note}</p>
+                    <p className="mt-1 text-xs text-slate-500">Lat/Lng: {task.lat.toFixed(6)}, {task.lng.toFixed(6)}</p>
+                    {task.status === "done" && (
+                      <p className="mt-1 text-xs text-emerald-700">Berat tercatat: {task.weight} kg{task.proofPhotoName ? ` - Bukti: ${task.proofPhotoName}` : ""}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex w-full flex-col gap-2 md:w-56">
+                  <button
+                    onClick={() => openMap(task)}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <Navigation size={16} />
+                    Buka Map
+                  </button>
+
+                  {task.status === "pending" && (
+                    <button
+                      onClick={() => startPickup(task.id)}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
+                    >
+                      <Clock3 size={16} />
+                      Mulai Jemput
+                    </button>
+                  )}
+
+                  {task.status === "on-process" && (
+                    <button
+                      onClick={() => openFinishModal(task)}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
+                    >
+                      <CheckCircle2 size={16} />
+                      Selesaikan
+                    </button>
+                  )}
+
                   {task.status === "done" && (
-                    <p className="mt-1 text-xs text-emerald-700">Berat tercatat: {task.weight} kg{task.proofPhotoName ? ` - Bukti: ${task.proofPhotoName}` : ""}</p>
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
+                      <CheckCircle2 size={16} />
+                      Tugas Selesai
+                    </div>
                   )}
                 </div>
               </div>
-
-              <div className="flex w-full flex-col gap-2 md:w-56">
-                <button
-                  onClick={() => openMap(task)}
-                  className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  <Navigation size={16} />
-                  Buka Map
-                </button>
-
-                {task.status === "pending" && (
-                  <button
-                    onClick={() => startPickup(task.id)}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
-                  >
-                    <Clock3 size={16} />
-                    Mulai Jemput
-                  </button>
-                )}
-
-                {task.status === "on-process" && (
-                  <button
-                    onClick={() => openFinishModal(task)}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
-                  >
-                    <CheckCircle2 size={16} />
-                    Selesaikan
-                  </button>
-                )}
-
-                {task.status === "done" && (
-                  <div className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
-                    <CheckCircle2 size={16} />
-                    Tugas Selesai
-                  </div>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))
+        )}
       </section>
 
       {showFinishModal && activeTask && (

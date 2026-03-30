@@ -49,13 +49,7 @@ function statusClassName(status) {
 }
 
 const historyLogSeed = [
-  { id: "HK-1", taskIndex: 0, daysAgo: 0, weight: 3.1, status: "Done" },
-  { id: "HK-2", taskIndex: 1, daysAgo: 1, weight: 2.4, status: "Done" },
-  { id: "HK-3", taskIndex: 2, daysAgo: 2, weight: 1.9, status: "Done" },
-  { id: "HK-4", taskIndex: 0, daysAgo: 3, weight: 0, status: "Pending" },
-  { id: "HK-5", taskIndex: 1, daysAgo: 4, weight: 2.8, status: "Done" },
-  { id: "HK-6", taskIndex: 2, daysAgo: 5, weight: 0, status: "On-Process" },
-  { id: "HK-7", taskIndex: 0, daysAgo: 7, weight: 2.2, status: "Done" },
+  // Start empty for driver database testing.
 ]
 
 export default function DriverHistoryPage() {

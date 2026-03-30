@@ -67,6 +67,7 @@ export default function DriverMapPage() {
   const mapCenter = routeStops[0] || { lat: -6.200392, lng: 106.816048 }
   const mapEmbedLink = `https://www.google.com/maps?q=${mapCenter.lat},${mapCenter.lng}&z=13&output=embed`
   const multiStopLink = buildMultiStopMapLink(routeStops)
+  const hasRoute = routeStops.length > 0
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-5">
@@ -95,31 +96,47 @@ export default function DriverMapPage() {
         </div>
 
         <ol className="space-y-3">
-          {routeStops.map((stop, index) => (
-            <li key={stop.id} className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-gray/40 p-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-eco-green text-xs font-semibold text-white">
-                {index + 1}
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-forest-emerald">{stop.name}</p>
-                <p className="text-sm text-slate-600">{stop.address}</p>
-                <p className="text-xs text-slate-500">Koordinat: {stop.lat.toFixed(6)}, {stop.lng.toFixed(6)}</p>
-              </div>
+          {!hasRoute ? (
+            <li className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+              Belum ada urutan rute karena daftar penjemputan masih kosong.
             </li>
-          ))}
+          ) : (
+            routeStops.map((stop, index) => (
+              <li key={stop.id} className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-gray/40 p-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-eco-green text-xs font-semibold text-white">
+                  {index + 1}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-forest-emerald">{stop.name}</p>
+                  <p className="text-sm text-slate-600">{stop.address}</p>
+                  <p className="text-xs text-slate-500">Koordinat: {stop.lat.toFixed(6)}, {stop.lng.toFixed(6)}</p>
+                </div>
+              </li>
+            ))
+          )}
         </ol>
       </section>
 
       <div className="pt-1">
-        <a
-          href={multiStopLink}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-3 text-sm font-semibold text-white hover:brightness-95 md:w-auto"
-        >
-          <Navigation size={16} />
-          Mulai Navigasi Rute
-        </a>
+        {hasRoute ? (
+          <a
+            href={multiStopLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-3 text-sm font-semibold text-white hover:brightness-95 md:w-auto"
+          >
+            <Navigation size={16} />
+            Mulai Navigasi Rute
+          </a>
+        ) : (
+          <button
+            disabled
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-500 md:w-auto"
+          >
+            <Navigation size={16} />
+            Mulai Navigasi Rute
+          </button>
+        )}
       </div>
     </div>
   )
