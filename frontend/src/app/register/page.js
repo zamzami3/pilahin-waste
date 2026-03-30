@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 import { ensureDefaults, registerUser } from '../../lib/mockAuth'
 
 export default function RegisterPage() {
@@ -10,6 +11,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -72,14 +74,24 @@ export default function RegisterPage() {
 
               <label className="block text-sm font-semibold text-forest-emerald">
                 Password
-                <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  required
-                  placeholder="Minimal 8 karakter"
-                  className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-eco-green"
-                />
+                <div className="relative mt-2">
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    required
+                    placeholder="Minimal 8 karakter"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 text-slate-800 outline-none transition focus:border-eco-green"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-3 inline-flex items-center text-slate-500 hover:text-forest-emerald"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </label>
             </div>
 
