@@ -1,17 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { MapPin, ClipboardList, Scale, Coins, Activity, BarChart3 } from "lucide-react"
 import { initialTasks } from "./initialTasks"
 import StyledSelect from "../../components/StyledSelect"
-
-const trendWeightData = [
-  { day: "Sen", kg: 2.4 },
-  { day: "Sel", kg: 3.1 },
-  { day: "Rab", kg: 1.8 },
-  { day: "Kam", kg: 4.2 },
-  { day: "Jum", kg: 3.6 },
-]
 
 const CARD_ICON_SIZE = 20
 
@@ -30,6 +22,12 @@ export default function DriverDashboard() {
   const totalPoints = Math.round(totalWeightValue * 12)
   const activeTasks = tasks.filter((t) => t.status === "on-process")
   const currentActiveTask = activeTasks[0] || null
+  const trendWeightData = useMemo(() => {
+    return tasks
+      .filter((item) => item.status === "done" && Number(item.weight) > 0)
+      .slice(-5)
+      .map((item, index) => ({ day: `R${index + 1}`, kg: Number(item.weight) }))
+  }, [tasks])
   const maxTrendKg = Math.max(...trendWeightData.map((item) => item.kg), 1)
 
   const statCards = [
@@ -154,59 +152,69 @@ export default function DriverDashboard() {
           </div>
 
           <div className="mt-5 flex h-48 items-end justify-between gap-3 rounded-lg border border-slate-100 bg-slate-gray/60 px-3 pb-3 pt-6">
-            {trendWeightData.map((item) => {
-              const barHeight = Math.max((item.kg / maxTrendKg) * 100, 12)
-              return (
-                <div key={item.day} className="flex flex-1 flex-col items-center justify-end gap-2">
-                  <div className="text-xs text-slate-500">{item.kg} kg</div>
-                  <div className="w-full rounded-t-md bg-mint-soft/60 p-1">
-                    <div
-                      className="w-full rounded-t-md bg-eco-green"
-                      style={{ height: `${barHeight}%`, minHeight: "12px" }}
-                    />
+            {trendWeightData.length === 0 ? (
+              <div className="w-full text-center text-sm text-slate-500">Belum ada riwayat setoran untuk ditampilkan.</div>
+            ) : (
+              trendWeightData.map((item) => {
+                const barHeight = Math.max((item.kg / maxTrendKg) * 100, 12)
+                return (
+                  <div key={item.day} className="flex flex-1 flex-col items-center justify-end gap-2">
+                    <div className="text-xs text-slate-500">{item.kg} kg</div>
+                    <div className="w-full rounded-t-md bg-mint-soft/60 p-1">
+                      <div
+                        className="w-full rounded-t-md bg-eco-green"
+                        style={{ height: `${barHeight}%`, minHeight: "12px" }}
+                      />
+                    </div>
+                    <div className="text-xs font-medium text-slate-600">{item.day}</div>
                   </div>
-                  <div className="text-xs font-medium text-slate-600">{item.day}</div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
         </article>
       </section>
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold mb-3">Daftar Penjemputan</h2>
-        <ul className="space-y-3">
-          {tasks.map((t) => (
-            <li key={t.id} className="bg-white rounded-lg p-4 shadow-sm border border-eco-green/10">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-md bg-forest-emerald/10 text-forest-emerald">
-                      <MapPin size={CARD_ICON_SIZE} />
-                    </div>
-                    <div>
-                      <div className="font-medium">{t.name}</div>
-                      <a href={`https://www.google.com/maps/search/?api=1&query=${t.lat},${t.lng}`} target="_blank" rel="noreferrer" className="text-sm text-slate-500">{t.address}</a>
-                      <div className="text-sm text-slate-400">{t.note}</div>
-                      <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${t.status === "done" ? "bg-emerald-100 text-emerald-700" : t.status === "on-process" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
-                        {t.status}
-                      </span>
+        {tasks.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+            Belum ada daftar penjemputan.
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {tasks.map((t) => (
+              <li key={t.id} className="bg-white rounded-lg p-4 shadow-sm border border-eco-green/10">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-md bg-forest-emerald/10 text-forest-emerald">
+                        <MapPin size={CARD_ICON_SIZE} />
+                      </div>
+                      <div>
+                        <div className="font-medium">{t.name}</div>
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${t.lat},${t.lng}`} target="_blank" rel="noreferrer" className="text-sm text-slate-500">{t.address}</a>
+                        <div className="text-sm text-slate-400">{t.note}</div>
+                        <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${t.status === "done" ? "bg-emerald-100 text-emerald-700" : t.status === "on-process" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
+                          {t.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="w-40 flex flex-col gap-3">
-                  <button onClick={() => startPickup(t.id)} disabled={t.status !== 'pending'} className={`w-full py-3 text-lg rounded-md font-semibold ${t.status === 'pending' ? 'bg-forest-emerald text-white' : 'bg-slate-100 text-slate-600 cursor-not-allowed'}`}>
-                    Mulai Jemput
-                  </button>
-                  <button onClick={() => openFinish(t)} disabled={t.status !== "on-process"} className={`w-full py-3 text-lg rounded-md font-semibold ${t.status === "on-process" ? "bg-eco-green text-white" : "bg-slate-100 text-slate-500 cursor-not-allowed"}`}>
-                    Selesai
-                  </button>
+                  <div className="w-40 flex flex-col gap-3">
+                    <button onClick={() => startPickup(t.id)} disabled={t.status !== 'pending'} className={`w-full py-3 text-lg rounded-md font-semibold ${t.status === 'pending' ? 'bg-forest-emerald text-white' : 'bg-slate-100 text-slate-600 cursor-not-allowed'}`}>
+                      Mulai Jemput
+                    </button>
+                    <button onClick={() => openFinish(t)} disabled={t.status !== "on-process"} className={`w-full py-3 text-lg rounded-md font-semibold ${t.status === "on-process" ? "bg-eco-green text-white" : "bg-slate-100 text-slate-500 cursor-not-allowed"}`}>
+                      Selesai
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Modal for finishing */}
