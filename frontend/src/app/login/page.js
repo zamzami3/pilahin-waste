@@ -30,28 +30,56 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-semibold mb-2">Masuk</h1>
-      <p className="text-sm text-slate-600 mb-4">Masuk menggunakan akun Anda.</p>
+    <section className="px-6 py-12 md:py-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid items-center gap-8 md:grid-cols-2">
+          <div className="rounded-3xl bg-mint-soft p-8 md:p-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-eco-green">Akun Pilahin</p>
+            <h1 className="mt-3 text-4xl font-extrabold leading-tight text-forest-emerald">Masuk dan lanjutkan aktivitasmu.</h1>
+            <p className="mt-4 text-slate-700">
+              Pantau jadwal pickup, cek poin, dan akses dashboard sesuai peran akun Anda.
+            </p>
+          </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded-md shadow-sm space-y-3">
-        {error && <div className="text-sm text-red-600">{error}</div>}
+          <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <h2 className="text-2xl font-bold text-forest-emerald">Masuk</h2>
+            <p className="mt-2 text-sm text-slate-600">Gunakan email dan password yang sudah terdaftar.</p>
 
-        <label className="block text-sm">
-          Email
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="w-full mt-1 px-3 py-2 border rounded-md" />
-        </label>
+            {error && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
-        <label className="block text-sm">
-          Password
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="w-full mt-1 px-3 py-2 border rounded-md" />
-        </label>
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm font-semibold text-forest-emerald">
+                Email
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  required
+                  placeholder="nama@email.com"
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-eco-green"
+                />
+              </label>
 
-        <div className="flex items-center justify-between">
-          <button type="submit" className="bg-eco-green text-white px-4 py-2 rounded-md font-semibold">Masuk</button>
-          <Link href="/register" className="text-sm text-forest-emerald">Belum punya akun? Daftar</Link>
+              <label className="block text-sm font-semibold text-forest-emerald">
+                Password
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  required
+                  placeholder="Masukkan password"
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-eco-green"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <button type="submit" className="rounded-xl bg-eco-green px-6 py-3 font-semibold text-white hover:brightness-95">Masuk</button>
+              <Link href="/register" className="text-sm font-semibold text-forest-emerald hover:text-eco-green">Belum punya akun? Daftar</Link>
+            </div>
+          </form>
         </div>
-      </form>
-    </div>
+      </div>
+    </section>
   )
 }

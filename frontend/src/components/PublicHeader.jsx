@@ -26,17 +26,39 @@ export default function PublicHeader() {
   // this ensures public header only appears on public pages
   if (pathname?.startsWith('/warga') || pathname?.startsWith('/driver') || pathname?.startsWith('/admin')) return null
 
+  const navItems = [
+    { href: '/', label: 'Beranda', match: 'exact' },
+    { href: '/about', label: 'Tentang Kami', match: 'prefix' },
+    { href: '/paket', label: 'Paket Layanan', match: 'prefix' },
+    { href: '/coverage', label: 'Lokasi Jangkauan', match: 'prefix' },
+  ]
+
+  function isActive(href, match) {
+    if (!pathname) return false
+    if (match === 'exact') return pathname === href
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
-    <header className="bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/90">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link href="/" className="text-forest-emerald font-bold text-lg">Pilahin</Link>
             <nav className="hidden md:flex ml-8 space-x-6">
-              <Link href="/" className="text-sm text-forest-emerald hover:text-eco-green">Beranda</Link>
-              <Link href="/about" className="text-sm text-forest-emerald hover:text-eco-green">Tentang Kami</Link>
-              <Link href="/paket" className="text-sm text-forest-emerald hover:text-eco-green">Paket Layanan</Link>
-              <Link href="/coverage" className="text-sm text-forest-emerald hover:text-eco-green">Lokasi Jangkauan</Link>
+              {navItems.map((item) => {
+                const active = isActive(item.href, item.match)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`text-sm transition-colors ${active ? 'font-semibold text-eco-green' : 'text-forest-emerald hover:text-eco-green'}`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
             </nav>
           </div>
 
@@ -61,12 +83,22 @@ export default function PublicHeader() {
       {open && (
         <div className="md:hidden bg-white border-t">
           <nav className="px-4 py-4 space-y-2">
-            <Link href="/" className="block text-forest-emerald">Beranda</Link>
-            <Link href="/about" className="block text-forest-emerald">Tentang Kami</Link>
-            <Link href="/paket" className="block text-forest-emerald">Paket Layanan</Link>
-            <Link href="/coverage" className="block text-forest-emerald">Lokasi Jangkauan</Link>
+            {navItems.map((item) => {
+              const active = isActive(item.href, item.match)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`block rounded-md px-2 py-1.5 text-sm transition-colors ${active ? 'bg-mint-soft font-semibold text-eco-green' : 'text-forest-emerald hover:bg-slate-50'}`}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
             <div className="pt-2 border-t mt-2 flex flex-col gap-2">
-              <Link href="/login" className="flex items-center gap-2 px-4 py-2 rounded-md text-forest-emerald"><LogIn size={16}/> Masuk</Link>
+              <Link href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 rounded-md text-forest-emerald"><LogIn size={16}/> Masuk</Link>
               <Link href="/subscribe" className="bg-eco-green text-white px-4 py-2 rounded-full text-sm font-medium">Mulai Berlangganan</Link>
             </div>
           </nav>

@@ -1,5 +1,6 @@
 import DashboardSidebar from '../../components/DashboardSidebar'
 import ClientErrorBoundary from '../../components/ClientErrorBoundary'
+import ScrollRevealWrapper from '../../components/ScrollRevealWrapper'
 
 const ROLE_THEME = {
   warga: 'bg-mint-soft text-forest-emerald',
@@ -19,7 +20,9 @@ export default function RoleLayout({ children, params }) {
       <DashboardSidebar role={role} />
       <div className="md:ml-64">
         <ClientErrorBoundary>
-          <main className="container mx-auto p-6">{children}</main>
+          <main className="container mx-auto p-6">
+            <ScrollRevealWrapper>{children}</ScrollRevealWrapper>
+          </main>
         </ClientErrorBoundary>
       </div>
     </div>
