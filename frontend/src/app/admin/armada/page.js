@@ -5,34 +5,7 @@ import { Clipboard, Clock, MapPin, Truck, User } from "lucide-react"
 import { getUsers } from "../../../lib/mockAuth"
 import StyledSelect from "../../../components/StyledSelect"
 
-const SIMULATED_LOCATIONS = [
-  "Jl. Merdeka No.12, Kecamatan A",
-  "Perumahan Melati Blok C3, Kecamatan B",
-  "Pasar Induk Timur, Kecamatan C",
-  "Jl. Anggrek Raya, Kecamatan D",
-  "Kompleks Hijau Asri, Kecamatan E",
-]
-
-const PENDING_REPORTS_SEED = [
-  {
-    id: "RPT-901",
-    area: "Kecamatan A",
-    address: "Jl. Rajawali No.8",
-    note: "Kontainer penuh sejak pagi",
-  },
-  {
-    id: "RPT-902",
-    area: "Kecamatan C",
-    address: "Pasar Sentral Blok F",
-    note: "Sampah menumpuk di belakang kios",
-  },
-  {
-    id: "RPT-903",
-    area: "Kecamatan D",
-    address: "Perumahan Kenanga A12",
-    note: "Laporan sampah penuh dari warga",
-  },
-]
+const PENDING_REPORTS_SEED = []
 
 function getFleetIndicator(status) {
   const normalized = String(status || "").toLowerCase()
@@ -83,51 +56,33 @@ export default function AdminArmadaPage() {
     const allUsers = getUsers()
     const driverUsers = allUsers.filter((user) => String(user.role || "").toLowerCase() === "driver")
 
-    const fallbackDrivers = [
-      { id: "drv-fallback-1", name: "Driver Cadangan 1" },
-      { id: "drv-fallback-2", name: "Driver Cadangan 2" },
-      { id: "drv-fallback-3", name: "Driver Cadangan 3" },
-    ]
-
-    const baseDrivers = driverUsers.length > 0 ? driverUsers : fallbackDrivers
-
-    const hydratedDrivers = baseDrivers.map((driver, index) => {
-      const status = index % 3 === 0 ? "on-duty" : index % 3 === 1 ? "available" : "off"
+    const hydratedDrivers = driverUsers.map((driver) => {
+      const status = String(driver.status || "available").toLowerCase()
       return {
         id: driver.id,
         name: driver.name,
-        status,
-        location: SIMULATED_LOCATIONS[index % SIMULATED_LOCATIONS.length],
+        status: status === "on-duty" || status === "off" ? status : "available",
+        location: driver.address || driver.alamat || "Lokasi belum tersedia",
       }
     })
 
-    const hydratedVehicles = hydratedDrivers.map((driver, index) => {
-      const type = index % 2 === 0 ? "Motor" : "Truk"
+    const hydratedVehicles = hydratedDrivers.map((driver) => {
       return {
-        id: `VH-${index + 1}`,
-        plateNo: `B ${1200 + index} PLH`,
-        vehicleType: type,
+        id: `VH-${driver.id}`,
+        plateNo: driver.plateNo || "-",
+        vehicleType: driver.vehicleType || "-",
         driverId: driver.id,
         driverName: driver.name,
         fleetStatus: statusToFleetValue(driver.status),
       }
     })
 
-    hydratedVehicles.push({
-      id: "VH-SP-1",
-      plateNo: "B 9987 PLH",
-      vehicleType: "Truk",
-      driverId: null,
-      driverName: "Belum ditugaskan",
-      fleetStatus: "Servis/Off",
-    })
-
     const onProcessTasks = hydratedDrivers
       .filter((driver) => driver.status === "on-duty")
       .map((driver, index) => ({
         id: `TSK-${index + 41}`,
-        area: `Kecamatan ${String.fromCharCode(65 + (index % 5))}`,
-        address: SIMULATED_LOCATIONS[(index + 1) % SIMULATED_LOCATIONS.length],
+        area: driver.location,
+        address: driver.location,
         status: "On-Process",
         driverId: driver.id,
         driverName: driver.name,
@@ -286,22 +241,28 @@ export default function AdminArmadaPage() {
               </tr>
             </thead>
             <tbody>
-              {vehicles.map((vehicle) => {
-                const indicator = getFleetIndicator(vehicle.fleetStatus)
-                return (
-                  <tr key={vehicle.id} className="border-t border-slate-100 text-slate-700">
-                    <td className="px-4 py-3 font-medium">{vehicle.plateNo}</td>
-                    <td className="px-4 py-3">{vehicle.vehicleType}</td>
-                    <td className="px-4 py-3">{vehicle.driverName}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${indicator.chipClass}`}>
-                        <span className={`h-2 w-2 rounded-full ${indicator.dotClass}`} />
-                        {indicator.label}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
+              {vehicles.length === 0 ? (
+                <tr className="border-t border-slate-100 text-slate-700">
+                  <td colSpan={4} className="px-4 py-5 text-sm text-slate-500">Belum ada data kendaraan.</td>
+                </tr>
+              ) : (
+                vehicles.map((vehicle) => {
+                  const indicator = getFleetIndicator(vehicle.fleetStatus)
+                  return (
+                    <tr key={vehicle.id} className="border-t border-slate-100 text-slate-700">
+                      <td className="px-4 py-3 font-medium">{vehicle.plateNo}</td>
+                      <td className="px-4 py-3">{vehicle.vehicleType}</td>
+                      <td className="px-4 py-3">{vehicle.driverName}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${indicator.chipClass}`}>
+                          <span className={`h-2 w-2 rounded-full ${indicator.dotClass}`} />
+                          {indicator.label}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>

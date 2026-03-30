@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
         </Link>
       </header>
 
-      <section className="bg-white rounded-xl shadow border border-slate-100 p-4 mb-4">
+      <section className="relative z-30 overflow-visible bg-white rounded-xl shadow border border-slate-100 p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Cari User (Nama / Email)</label>
@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
         </div>
       </section>
 
-      <section className="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
+      <section className="relative z-10 bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
         <div className="max-h-[560px] overflow-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">

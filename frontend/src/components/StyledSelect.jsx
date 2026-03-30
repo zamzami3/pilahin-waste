@@ -69,7 +69,7 @@ export default function StyledSelect({
   }
 
   return (
-    <div ref={rootRef}>
+    <div ref={rootRef} className={open ? "relative z-[80]" : "relative"}>
       {label && <label className="block text-sm mb-1 text-slate-700">{label}</label>}
 
       <div className="relative">
@@ -92,7 +92,7 @@ export default function StyledSelect({
 
         {open && !disabled && (
           <ul
-            className={`absolute z-40 mt-2 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg ${menuClassName}`}
+            className={`absolute z-[90] mt-2 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg ${menuClassName}`}
             role="listbox"
           >
             {normalizedOptions.length === 0 ? (

@@ -4,68 +4,11 @@ import { useMemo } from "react"
 import { DollarSign, FileText, Gift, Printer } from "lucide-react"
 
 const TRANSACTION_LOGS = [
-  {
-    id: "TRX-240301",
-    date: "2026-03-03",
-    warga: "Ayu Lestari",
-    paket: "Silver",
-    amount: 45000,
-    method: "VA BCA",
-    status: "Berhasil",
-  },
-  {
-    id: "TRX-240302",
-    date: "2026-03-05",
-    warga: "Rio Pratama",
-    paket: "Gold",
-    amount: 85000,
-    method: "E-Wallet",
-    status: "Berhasil",
-  },
-  {
-    id: "TRX-240303",
-    date: "2026-03-07",
-    warga: "Nina Amalia",
-    paket: "Emerald",
-    amount: 150000,
-    method: "Transfer Bank",
-    status: "Berhasil",
-  },
-  {
-    id: "TRX-240304",
-    date: "2026-03-12",
-    warga: "Dewi Maharani",
-    paket: "Gold",
-    amount: 85000,
-    method: "VA Mandiri",
-    status: "Berhasil",
-  },
-  {
-    id: "TRX-240305",
-    date: "2026-03-16",
-    warga: "Bagas Wirawan",
-    paket: "Silver",
-    amount: 45000,
-    method: "E-Wallet",
-    status: "Berhasil",
-  },
-  {
-    id: "TRX-240306",
-    date: "2026-03-18",
-    warga: "Salsa Putri",
-    paket: "Emerald",
-    amount: 150000,
-    method: "Transfer Bank",
-    status: "Berhasil",
-  },
+  // Start empty for admin database testing.
 ]
 
 const REDEEMED_POINTS = [
-  { warga: "Ayu Lestari", points: 900 },
-  { warga: "Rio Pratama", points: 1200 },
-  { warga: "Nina Amalia", points: 500 },
-  { warga: "Dewi Maharani", points: 700 },
-  { warga: "Bagas Wirawan", points: 1000 },
+  // Start empty for admin database testing.
 ]
 
 function rupiah(value) {
@@ -196,21 +139,27 @@ export default function AdminFinancePage() {
               </tr>
             </thead>
             <tbody>
-              {successfulTransactions.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100 text-slate-700">
-                  <td className="px-4 py-3 font-medium">{item.id}</td>
-                  <td className="px-4 py-3">{new Date(item.date).toLocaleDateString("id-ID")}</td>
-                  <td className="px-4 py-3">{item.warga}</td>
-                  <td className="px-4 py-3">{item.paket}</td>
-                  <td className="px-4 py-3">{item.method}</td>
-                  <td className="px-4 py-3 font-semibold text-forest-emerald font-mono tabular-nums">{rupiah(item.amount)}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      {item.status}
-                    </span>
-                  </td>
+              {successfulTransactions.length === 0 ? (
+                <tr className="border-t border-slate-100 text-slate-700">
+                  <td colSpan={7} className="px-4 py-5 text-sm text-slate-500">Belum ada transaksi langganan.</td>
                 </tr>
-              ))}
+              ) : (
+                successfulTransactions.map((item) => (
+                  <tr key={item.id} className="border-t border-slate-100 text-slate-700">
+                    <td className="px-4 py-3 font-medium">{item.id}</td>
+                    <td className="px-4 py-3">{new Date(item.date).toLocaleDateString("id-ID")}</td>
+                    <td className="px-4 py-3">{item.warga}</td>
+                    <td className="px-4 py-3">{item.paket}</td>
+                    <td className="px-4 py-3">{item.method}</td>
+                    <td className="px-4 py-3 font-semibold text-forest-emerald font-mono tabular-nums">{rupiah(item.amount)}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

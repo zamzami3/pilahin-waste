@@ -23,6 +23,55 @@ const emptyDraft = {
   caption: "",
 }
 
+function toRelativeTime(dateValue) {
+  if (!dateValue) return "Baru saja"
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) return "Baru saja"
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000))
+  if (diffMinutes < 1) return "Baru saja"
+  if (diffMinutes < 60) return `${diffMinutes} menit lalu`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours} jam lalu`
+  const diffDays = Math.floor(diffHours / 24)
+  return `${diffDays} hari lalu`
+}
+
+function extractRequestRows(users) {
+  if (!Array.isArray(users) || users.length === 0 || typeof window === "undefined") return []
+
+  const wargaUsers = users.filter((user) => String(user.role || "").toLowerCase() === "warga")
+  const rows = []
+
+  wargaUsers.forEach((warga) => {
+    const raw = localStorage.getItem(`pilahin_reports_${warga.id}`)
+    if (!raw) return
+
+    try {
+      const reports = JSON.parse(raw)
+      if (!Array.isArray(reports)) return
+
+      reports.forEach((report) => {
+        const status = String(report.status || "").toLowerCase()
+        if (status && status !== "diproses" && status !== "pending" && status !== "new") return
+
+        rows.push({
+          id: report.id || `${warga.id}-${Date.now()}`,
+          address: report.location || warga.address || warga.alamat || "Alamat tidak tersedia",
+          type: report.jenis || report.type || "Laporan Sampah",
+          reportedAt: toRelativeTime(report.date),
+          status: "new",
+          createdAt: report.date ? new Date(report.date).getTime() : 0,
+        })
+      })
+    } catch (error) {
+      // Skip malformed local report payload.
+    }
+  })
+
+  return rows.sort((a, b) => b.createdAt - a.createdAt).map(({ createdAt, ...rest }) => rest)
+}
+
 export default function AdminHome() {
   const [users, setUsers] = useState([])
   const [drivers, setDrivers] = useState([])
@@ -39,27 +88,23 @@ export default function AdminHome() {
     setUsers(u)
 
     const d = u.filter((x) => x.role === "driver")
-    const dWithStatus = d.map((drv, i) => ({
+    const dWithStatus = d.map((drv) => ({
       ...drv,
-      status: i % 2 === 0 ? "on-route" : "idle",
-      area: `Kecamatan ${String.fromCharCode(65 + (i % 4))}`,
-      lastSeen: `${10 + i}m`,
+      status: String(drv.status || "idle").toLowerCase() === "on-route" ? "on-route" : "idle",
+      area: drv.address || drv.alamat || "Belum ada area",
+      lastSeen: "-",
     }))
     setDrivers(dWithStatus)
 
-    setRequests([
-      { id: 1001, address: "Jl. Merdeka No.12", type: "Sampah Organik", reportedAt: "2 jam lalu", status: "new" },
-      { id: 1002, address: "Perumahan B, Blok C3", type: "Sampah Plastik", reportedAt: "1 jam lalu", status: "new" },
-      { id: 1003, address: "Pasar Tradisional, Kios 5-6", type: "Sampah Basah", reportedAt: "30 menit lalu", status: "new" },
-    ])
+    setRequests(extractRequestRows(u))
 
     setArticleItems(seedArticlesIfNeeded())
   }, [])
 
-  const totalIncome = 12500000
+  const totalIncome = 0
   const totalResidents = users.filter((u) => u.role === "warga").length
   const driversOnDuty = drivers.filter((d) => d.status === "on-route").length
-  const totalTrash = 3420
+  const totalTrash = 0
 
   const articleCount = articleItems.length
   const publishedCount = articleItems.filter((item) => item.status === "published").length
@@ -67,6 +112,7 @@ export default function AdminHome() {
 
   function assignRequest(id) {
     const driver = drivers[0]
+    if (!driver) return
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: "assigned", assignedTo: driver?.name || null } : r))
     )
@@ -190,8 +236,8 @@ export default function AdminHome() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-3xl font-bold">Command Center</h1>
-        <p className="text-sm text-slate-600 mt-1">Ringkasan operasional, armada, dan permintaan terbaru.</p>
+        <h1 className="text-3xl font-bold text-white">Command Center</h1>
+        <p className="text-sm text-mint-soft mt-1">Ringkasan operasional, armada, dan permintaan terbaru.</p>
 
         <div className="mt-4 inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <button
@@ -212,31 +258,31 @@ export default function AdminHome() {
       {activeTab === "overview" ? (
         <>
           <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 shadow">
+            <div className="bg-white rounded-xl p-4 shadow text-slate-800">
               <div className="text-sm text-slate-500">Total Pemasukan</div>
               <div className="text-2xl font-semibold text-forest-emerald">Rp {totalIncome.toLocaleString("id-ID")}</div>
             </div>
 
-            <div className="bg-white rounded-xl p-4 shadow">
+            <div className="bg-white rounded-xl p-4 shadow text-slate-800">
               <div className="text-sm text-slate-500">Total Warga Aktif</div>
               <div className="text-2xl font-semibold text-forest-emerald">{totalResidents}</div>
             </div>
 
-            <div className="bg-white rounded-xl p-4 shadow">
+            <div className="bg-white rounded-xl p-4 shadow text-slate-800">
               <div className="text-sm text-slate-500">Driver Bertugas</div>
               <div className="text-2xl font-semibold text-forest-emerald">{driversOnDuty}</div>
             </div>
 
-            <div className="bg-white rounded-xl p-4 shadow">
+            <div className="bg-white rounded-xl p-4 shadow text-slate-800">
               <div className="text-sm text-slate-500">Total Sampah Seluruhnya (kg)</div>
               <div className="text-2xl font-semibold text-forest-emerald">{totalTrash} kg</div>
             </div>
           </section>
 
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 bg-white rounded-lg p-4 shadow">
+            <div className="lg:col-span-2 bg-white rounded-lg p-4 shadow text-slate-800">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Tren Volume Mingguan</h3>
+                <h3 className="text-lg font-semibold text-forest-emerald">Tren Volume Mingguan</h3>
                 <div className="text-sm text-slate-500">(placeholder grafik)</div>
               </div>
               <div className="h-64 rounded-md bg-slate-100 flex items-center justify-center text-slate-400">
@@ -244,9 +290,9 @@ export default function AdminHome() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg p-4 shadow">
+            <div className="bg-white rounded-lg p-4 shadow text-slate-800">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Map / Fleet Monitor</h3>
+                <h3 className="text-lg font-semibold text-forest-emerald">Map / Fleet Monitor</h3>
                 <button onClick={refreshFleet} className="text-sm px-3 py-1 rounded-md bg-eco-green text-white flex items-center gap-2">
                   <RefreshCw size={14} /> Refresh
                 </button>
@@ -274,7 +320,7 @@ export default function AdminHome() {
 
           <section className="bg-white rounded-lg p-4 shadow mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">New Requests</h3>
+              <h3 className="text-lg font-semibold text-forest-emerald">New Requests</h3>
               <div className="text-sm text-slate-500">Permintaan baru dari warga</div>
             </div>
 
@@ -283,49 +329,55 @@ export default function AdminHome() {
                 <thead>
                   <tr className="text-sm text-slate-500">
                     <th className="py-2">#</th>
-                    <th>Alamat</th>
-                    <th>Jenis</th>
-                    <th>Dilaporkan</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
+                    <th className="text-slate-600">Alamat</th>
+                    <th className="text-slate-600">Jenis</th>
+                    <th className="text-slate-600">Dilaporkan</th>
+                    <th className="text-slate-600">Status</th>
+                    <th className="text-slate-600">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((r) => (
-                    <tr key={r.id} className="border-t">
-                      <td className="py-3 text-sm">{r.id}</td>
-                      <td className="py-3">{r.address}</td>
-                      <td className="py-3 text-sm text-slate-600">{r.type}</td>
-                      <td className="py-3 text-sm text-slate-500">{r.reportedAt}</td>
-                      <td className="py-3">
-                        <span className={`px-3 py-1 rounded-full text-sm ${r.status === "new" ? "bg-yellow-100 text-yellow-800" : r.status === "assigned" ? "bg-eco-green text-white" : "bg-slate-100 text-slate-700"}`}>
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        {r.status === "new" ? (
-                          <button onClick={() => assignRequest(r.id)} className="px-3 py-1 rounded-md bg-forest-emerald text-white text-sm">Assign</button>
-                        ) : (
-                          <div className="text-sm text-slate-500">{r.assignedTo ? `Assigned to ${r.assignedTo}` : r.status}</div>
-                        )}
-                      </td>
+                  {requests.length === 0 ? (
+                    <tr className="border-t">
+                      <td colSpan={6} className="py-4 text-sm text-slate-500">Belum ada request baru dari warga.</td>
                     </tr>
-                  ))}
+                  ) : (
+                    requests.map((r) => (
+                      <tr key={r.id} className="border-t">
+                        <td className="py-3 text-sm text-slate-700">{r.id}</td>
+                        <td className="py-3 text-slate-700">{r.address}</td>
+                        <td className="py-3 text-sm text-slate-600">{r.type}</td>
+                        <td className="py-3 text-sm text-slate-500">{r.reportedAt}</td>
+                        <td className="py-3">
+                          <span className={`px-3 py-1 rounded-full text-sm ${r.status === "new" ? "bg-yellow-100 text-yellow-800" : r.status === "assigned" ? "bg-eco-green text-white" : "bg-slate-100 text-slate-700"}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          {r.status === "new" ? (
+                            <button onClick={() => assignRequest(r.id)} className="px-3 py-1 rounded-md bg-forest-emerald text-white text-sm">Assign</button>
+                          ) : (
+                            <div className="text-sm text-slate-500">{r.assignedTo ? `Assigned to ${r.assignedTo}` : r.status}</div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
 
           <section className="flex flex-wrap gap-3">
-            <Link href="/admin/users" className="px-4 py-2 rounded-md bg-white shadow">Manajemen User</Link>
-            <Link href="/admin/finance" className="px-4 py-2 rounded-md bg-white shadow">Laporan Keuangan</Link>
-            <Link href="/admin/armada" className="px-4 py-2 rounded-md bg-white shadow">Manajemen Armada</Link>
-            <Link href="/admin/settings" className="px-4 py-2 rounded-md bg-white shadow">Pengaturan API Token</Link>
+            <Link href="/admin/users" className="px-4 py-2 rounded-md bg-white shadow text-forest-emerald">Manajemen User</Link>
+            <Link href="/admin/finance" className="px-4 py-2 rounded-md bg-white shadow text-forest-emerald">Laporan Keuangan</Link>
+            <Link href="/admin/armada" className="px-4 py-2 rounded-md bg-white shadow text-forest-emerald">Manajemen Armada</Link>
+            <Link href="/admin/settings" className="px-4 py-2 rounded-md bg-white shadow text-forest-emerald">Pengaturan API Token</Link>
           </section>
         </>
       ) : (
         <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow">
+          <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow text-slate-800">
             <div className="flex items-center gap-2 text-forest-emerald">
               <UploadCloud size={18} />
               <h2 className="text-lg font-semibold">Upload Artikel Baru</h2>
@@ -420,7 +472,7 @@ export default function AdminHome() {
             </form>
           </div>
 
-          <div className="lg:col-span-3 bg-white rounded-xl p-5 shadow">
+          <div className="lg:col-span-3 bg-white rounded-xl p-5 shadow text-slate-800">
             <div className="flex items-center justify-between gap-3 text-forest-emerald">
               <div className="flex items-center gap-2">
                 <FileText size={18} />

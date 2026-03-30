@@ -10,100 +10,22 @@ const FILTER_OPTIONS = [
   { value: "year", label: "Tahunan" },
 ]
 
+const EMPTY_ANALYTICS_DATA = {
+  title: "Belum ada data",
+  trend: [],
+  wasteMix: { organik: 0, anorganik: 0 },
+  metrics: {
+    wargaGrowth: 0,
+    avgWastePerHousehold: 0,
+  },
+  topDrivers: [],
+  topAreas: [],
+}
+
 const ANALYTICS_DATA = {
-  "7d": {
-    title: "Performa 7 Hari",
-    trend: [
-      { label: "Sen", kg: 392 },
-      { label: "Sel", kg: 418 },
-      { label: "Rab", kg: 437 },
-      { label: "Kam", kg: 463 },
-      { label: "Jum", kg: 451 },
-      { label: "Sab", kg: 478 },
-      { label: "Min", kg: 442 },
-    ],
-    wasteMix: { organik: 64, anorganik: 36 },
-    metrics: {
-      wargaGrowth: 7.8,
-      avgWastePerHousehold: 12.4,
-    },
-    topDrivers: [
-      { name: "Andi Pratama", pickups: 68 },
-      { name: "Rina Cahya", pickups: 64 },
-      { name: "Budi Saputra", pickups: 59 },
-      { name: "Dina Lestari", pickups: 54 },
-      { name: "Fajar Nugroho", pickups: 49 },
-    ],
-    topAreas: [
-      { name: "Kecamatan A", densityKg: 972 },
-      { name: "Kecamatan C", densityKg: 903 },
-      { name: "Kecamatan D", densityKg: 846 },
-      { name: "Kecamatan B", densityKg: 818 },
-      { name: "Kecamatan E", densityKg: 771 },
-    ],
-  },
-  "30d": {
-    title: "Performa 30 Hari",
-    trend: [
-      { label: "M1", kg: 2910 },
-      { label: "M2", kg: 3048 },
-      { label: "M3", kg: 3275 },
-      { label: "M4", kg: 3182 },
-      { label: "M5", kg: 3354 },
-      { label: "M6", kg: 3461 },
-      { label: "M7", kg: 3589 },
-    ],
-    wasteMix: { organik: 60, anorganik: 40 },
-    metrics: {
-      wargaGrowth: 10.6,
-      avgWastePerHousehold: 13.1,
-    },
-    topDrivers: [
-      { name: "Andi Pratama", pickups: 281 },
-      { name: "Rina Cahya", pickups: 270 },
-      { name: "Budi Saputra", pickups: 261 },
-      { name: "Dina Lestari", pickups: 247 },
-      { name: "Fajar Nugroho", pickups: 239 },
-    ],
-    topAreas: [
-      { name: "Kecamatan A", densityKg: 6721 },
-      { name: "Kecamatan C", densityKg: 6249 },
-      { name: "Kecamatan D", densityKg: 5983 },
-      { name: "Kecamatan B", densityKg: 5802 },
-      { name: "Kecamatan E", densityKg: 5576 },
-    ],
-  },
-  year: {
-    title: "Performa Tahunan",
-    trend: [
-      { label: "Jan", kg: 12932 },
-      { label: "Feb", kg: 13487 },
-      { label: "Mar", kg: 14250 },
-      { label: "Apr", kg: 14866 },
-      { label: "Mei", kg: 15231 },
-      { label: "Jun", kg: 15988 },
-      { label: "Jul", kg: 16214 },
-    ],
-    wasteMix: { organik: 58, anorganik: 42 },
-    metrics: {
-      wargaGrowth: 16.2,
-      avgWastePerHousehold: 14.6,
-    },
-    topDrivers: [
-      { name: "Andi Pratama", pickups: 3234 },
-      { name: "Rina Cahya", pickups: 3102 },
-      { name: "Budi Saputra", pickups: 3001 },
-      { name: "Dina Lestari", pickups: 2889 },
-      { name: "Fajar Nugroho", pickups: 2764 },
-    ],
-    topAreas: [
-      { name: "Kecamatan A", densityKg: 77844 },
-      { name: "Kecamatan C", densityKg: 74198 },
-      { name: "Kecamatan D", densityKg: 71635 },
-      { name: "Kecamatan B", densityKg: 69583 },
-      { name: "Kecamatan E", densityKg: 66829 },
-    ],
-  },
+  "7d": EMPTY_ANALYTICS_DATA,
+  "30d": EMPTY_ANALYTICS_DATA,
+  year: EMPTY_ANALYTICS_DATA,
 }
 
 function MetricsCard({ icon: Icon, label, value, note }) {
@@ -127,13 +49,15 @@ export default function AdminAnalyticsPage() {
   const [timeFilter, setTimeFilter] = useState("7d")
 
   const selectedData = ANALYTICS_DATA[timeFilter]
+  const hasTrendData = selectedData.trend.length > 0
   const maxTrendValue = useMemo(
-    () => Math.max(...selectedData.trend.map((item) => item.kg)),
+    () => (hasTrendData ? Math.max(...selectedData.trend.map((item) => item.kg), 1) : 1),
     [selectedData]
   )
 
   const organicPercent = selectedData.wasteMix.organik
   const inorganicPercent = selectedData.wasteMix.anorganik
+  const hasWasteMix = organicPercent + inorganicPercent > 0
 
   return (
     <div>
@@ -183,24 +107,28 @@ export default function AdminAnalyticsPage() {
           </div>
 
           <div className="h-72 rounded-lg border border-slate-100 bg-slate-50 p-4">
-            <div className="h-full flex items-end justify-between gap-2">
-              {selectedData.trend.map((point) => {
-                const barHeight = Math.max(10, Math.round((point.kg / maxTrendValue) * 100))
-                return (
-                  <div key={point.label} className="h-full flex-1 flex flex-col justify-end items-center gap-2">
-                    <span className="text-[11px] text-slate-500">{point.kg.toLocaleString("id-ID")}</span>
-                    <div
-                      className="w-full max-w-[56px] rounded-t-md"
-                      style={{
-                        height: `${barHeight}%`,
-                        backgroundColor: "#2D6A4F",
-                      }}
-                    />
-                    <span className="text-xs text-slate-600 font-medium">{point.label}</span>
-                  </div>
-                )
-              })}
-            </div>
+            {hasTrendData ? (
+              <div className="h-full flex items-end justify-between gap-2">
+                {selectedData.trend.map((point) => {
+                  const barHeight = Math.max(10, Math.round((point.kg / maxTrendValue) * 100))
+                  return (
+                    <div key={point.label} className="h-full flex-1 flex flex-col justify-end items-center gap-2">
+                      <span className="text-[11px] text-slate-500">{point.kg.toLocaleString("id-ID")}</span>
+                      <div
+                        className="w-full max-w-[56px] rounded-t-md"
+                        style={{
+                          height: `${barHeight}%`,
+                          backgroundColor: "#2D6A4F",
+                        }}
+                      />
+                      <span className="text-xs text-slate-600 font-medium">{point.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-slate-500">Belum ada data tren berat sampah.</div>
+            )}
           </div>
         </div>
 
@@ -211,13 +139,17 @@ export default function AdminAnalyticsPage() {
           </h2>
 
           <div className="flex flex-col items-center justify-center">
-            <div
-              className="h-44 w-44 rounded-full"
-              style={{
-                background: `conic-gradient(#2D6A4F 0% ${organicPercent}%, #95D5B2 ${organicPercent}% 100%)`,
-              }}
-              aria-label="Pie chart proporsi sampah"
-            />
+            {hasWasteMix ? (
+              <div
+                className="h-44 w-44 rounded-full"
+                style={{
+                  background: `conic-gradient(#2D6A4F 0% ${organicPercent}%, #95D5B2 ${organicPercent}% 100%)`,
+                }}
+                aria-label="Pie chart proporsi sampah"
+              />
+            ) : (
+              <div className="flex h-44 w-44 items-center justify-center rounded-full bg-slate-100 text-sm text-slate-500">Belum ada data</div>
+            )}
 
             <div className="w-full mt-5 space-y-2 text-sm">
               <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
@@ -244,17 +176,21 @@ export default function AdminAnalyticsPage() {
             Top 5 Driver Penjemputan
           </h2>
           <div className="space-y-3">
-            {selectedData.topDrivers.map((driver, index) => (
-              <div key={driver.name} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-8 w-8 rounded-full bg-mint-soft text-forest-emerald text-sm font-bold flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="font-medium text-slate-700">{driver.name}</span>
+            {selectedData.topDrivers.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">Belum ada data driver penjemputan.</div>
+            ) : (
+              selectedData.topDrivers.map((driver, index) => (
+                <div key={driver.name} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="h-8 w-8 rounded-full bg-mint-soft text-forest-emerald text-sm font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium text-slate-700">{driver.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-forest-emerald">{driver.pickups} penjemputan</span>
                 </div>
-                <span className="text-sm font-semibold text-forest-emerald">{driver.pickups} penjemputan</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -264,17 +200,21 @@ export default function AdminAnalyticsPage() {
             Top 5 Wilayah Terpadat
           </h2>
           <div className="space-y-3">
-            {selectedData.topAreas.map((area, index) => (
-              <div key={area.name} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="h-8 w-8 rounded-full bg-mint-soft text-forest-emerald text-sm font-bold flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="font-medium text-slate-700">{area.name}</span>
+            {selectedData.topAreas.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">Belum ada data wilayah terpadat.</div>
+            ) : (
+              selectedData.topAreas.map((area, index) => (
+                <div key={area.name} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="h-8 w-8 rounded-full bg-mint-soft text-forest-emerald text-sm font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium text-slate-700">{area.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-forest-emerald">{area.densityKg.toLocaleString("id-ID")} kg</span>
                 </div>
-                <span className="text-sm font-semibold text-forest-emerald">{area.densityKg.toLocaleString("id-ID")} kg</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
