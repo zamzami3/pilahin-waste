@@ -7,9 +7,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'forest-emerald': '#1B4332',
-        'eco-green': '#2D6A4F',
-        'mint-soft': '#D8F3DC',
+        primary: '#0B2545',
+        secondary: '#134074',
+        accent: '#13315C',
+        softbase: '#F8F9FA',
+        highlight: '#00B4D8',
+        offwhite: '#F8F9FA',
+        // Backward-compatible aliases to avoid breaking existing classes.
+        'forest-emerald': '#0B2545',
+        'eco-green': '#134074',
+        'mint-soft': '#F8F9FA',
         'slate-gray': '#F8F9FA'
       }
     }

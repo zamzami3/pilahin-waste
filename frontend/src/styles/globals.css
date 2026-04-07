@@ -6,15 +6,22 @@
 
 /* Custom palette vars */
 :root {
-  --forest-emerald: #1B4332;
-  --eco-green: #2D6A4F;
-  --mint-soft: #D8F3DC;
-  --slate-gray: #F8F9FA;
+  --primary: #0B2545;
+  --secondary: #134074;
+  --accent: #13315C;
+  --softbase: #F8F9FA;
+  --highlight: #00B4D8;
+  --offwhite: #F8F9FA;
+  /* Backward-compatible aliases for existing CSS usage. */
+  --forest-emerald: var(--primary);
+  --eco-green: var(--secondary);
+  --mint-soft: var(--softbase);
+  --slate-gray: var(--offwhite);
 }
 
 html, body {
-  background-color: var(--slate-gray);
-  color: var(--forest-emerald);
+  background-color: var(--softbase);
+  color: var(--primary);
   margin: 0;
   padding: 0;
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -41,28 +48,29 @@ html, body {
 }
 
 .gallery-tile {
+  --reveal-progress: 0;
   transform: rotate(var(--tile-tilt, 0deg));
-  transition: transform 420ms ease;
+  transition: clip-path 110ms linear, transform 110ms linear;
 }
 
 .gallery-overlay {
-  background-color: rgba(27, 67, 50, 0.72);
+  background-color: rgba(11, 37, 69, 0.72);
 }
 
 .gallery-tile.scroll-reveal {
   opacity: 1;
-  transform: translateY(12px) rotate(var(--tile-tilt, 0deg));
-  clip-path: inset(48% 0 48% 0 round 18px);
-  transition: clip-path 580ms ease, transform 480ms ease;
+  transform: translateY(calc((1 - var(--reveal-progress, 0)) * 12px)) rotate(var(--tile-tilt, 0deg));
+  clip-path: inset(calc((1 - var(--reveal-progress, 0)) * 48%) 0 calc((1 - var(--reveal-progress, 0)) * 48%) 0 round 18px);
+  transition: clip-path 110ms linear, transform 110ms linear;
 }
 
 .gallery-tile.scroll-reveal.reveal-visible {
-  transform: translateY(0) rotate(var(--tile-tilt, 0deg));
-  clip-path: inset(0 0 0 0 round 18px);
+  transform: translateY(calc((1 - var(--reveal-progress, 0)) * 12px)) rotate(var(--tile-tilt, 0deg));
+  clip-path: inset(calc((1 - var(--reveal-progress, 0)) * 48%) 0 calc((1 - var(--reveal-progress, 0)) * 48%) 0 round 18px);
 }
 
 .gallery-tile.photo-fallback {
-  background-color: #d8f3dc;
+  background-color: #f8f9fa;
 }
 
 .gallery-tile.photo-fallback::before {
@@ -71,7 +79,7 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #1b4332;
+  color: #0b2545;
   font-weight: 700;
   font-size: 0.95rem;
   letter-spacing: 0.04em;
