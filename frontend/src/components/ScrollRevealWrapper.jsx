@@ -23,8 +23,12 @@ export default function ScrollRevealWrapper({ children, className = "" }) {
     elements.forEach((el, index) => {
       el.classList.remove("reveal-visible")
       el.classList.add("scroll-reveal")
-      el.style.transitionDelay = `${Math.min((index % 6) * 70, 350)}ms`
+      el.style.transitionDelay = el.classList.contains("gallery-tile")
+        ? "0ms"
+        : `${Math.min((index % 6) * 70, 350)}ms`
     })
+
+    const galleryElements = elements.filter((el) => el.classList.contains("gallery-tile"))
 
     elements.forEach((el) => {
       const rect = el.getBoundingClientRect()
@@ -33,20 +37,54 @@ export default function ScrollRevealWrapper({ children, className = "" }) {
       }
     })
 
+    const updateGalleryProgress = () => {
+      const viewportCenter = window.innerHeight / 2
+      const activationRange = Math.max(window.innerHeight * 0.34, 220)
+
+      galleryElements.forEach((el) => {
+        const rect = el.getBoundingClientRect()
+        const elementCenter = rect.top + rect.height / 2
+        const distance = Math.abs(elementCenter - viewportCenter)
+        const progress = Math.max(0, Math.min(1, 1 - distance / activationRange))
+        el.style.setProperty("--reveal-progress", progress.toFixed(3))
+
+        if (progress > 0.02) {
+          el.classList.add("reveal-visible")
+        } else {
+          el.classList.remove("reveal-visible")
+        }
+      })
+    }
+
+    updateGalleryProgress()
+    window.addEventListener("scroll", updateGalleryProgress, { passive: true })
+    window.addEventListener("resize", updateGalleryProgress)
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("reveal-visible")
-            observer.unobserve(entry.target)
+          } else {
+            entry.target.classList.remove("reveal-visible")
           }
         })
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+      {
+        threshold: [0, 0.12],
+        rootMargin: "0px 0px -4% 0px",
+      }
     )
 
-    elements.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    elements
+      .filter((el) => !el.classList.contains("gallery-tile"))
+      .forEach((el) => observer.observe(el))
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener("scroll", updateGalleryProgress)
+      window.removeEventListener("resize", updateGalleryProgress)
+    }
   }, [pathname])
 
   return (

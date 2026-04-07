@@ -147,9 +147,9 @@ export default function HomePage() {
       </section>
 
       {/* Layanan Unggulan */}
-      <section id="how-it-works" className="py-14">
+      <section id="how-it-works" className="bg-offwhite py-14">
         <div className="container mx-auto px-6 md:px-8">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4332]">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-primary">
             Layanan Unggulan Kami
           </h2>
 
@@ -159,9 +159,9 @@ export default function HomePage() {
               return (
                 <article
                   key={service.title}
-                  className="bg-white border border-[#2D6A4F]/40 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
+                  className="rounded-2xl border border-secondary/25 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#2D6A4F]/10 text-[#2D6A4F] flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
                     <Icon size={22} />
                   </div>
 
@@ -174,7 +174,7 @@ export default function HomePage() {
 
                   <Link
                     href={service.href}
-                    className="mt-6 inline-flex items-center rounded-full border border-[#2D6A4F] px-4 py-2 text-sm font-semibold text-[#2D6A4F] transition-colors duration-200 hover:bg-[#2D6A4F] hover:text-white"
+                    className="mt-6 inline-flex items-center rounded-full border border-secondary px-4 py-2 text-sm font-semibold text-secondary transition-colors duration-200 hover:bg-secondary hover:text-offwhite"
                   >
                     {service.cta}
                   </Link>
@@ -186,7 +186,7 @@ export default function HomePage() {
       </section>
 
       {/* Artikel Pilihan */}
-      <section className="py-16">
+      <section className="bg-offwhite py-16">
         <div className="container mx-auto px-6 md:px-8">
           <div className="flex items-end justify-between gap-4">
             <div>

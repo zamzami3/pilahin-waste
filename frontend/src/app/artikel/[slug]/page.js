@@ -45,7 +45,7 @@ export default function ArtikelDetailPage() {
         <section className="container mx-auto px-6 md:px-8 max-w-3xl">
           <h1 className="text-3xl font-extrabold text-forest-emerald">Artikel tidak ditemukan</h1>
           <p className="mt-2 text-slate-600">Artikel mungkin belum dipublikasikan atau sudah dihapus admin.</p>
-          <Link href="/artikel" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-eco-green hover:underline">
+          <Link href="/artikel" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-highlight hover:underline">
             <ArrowLeft size={16} />
             Kembali ke daftar artikel
           </Link>
@@ -59,7 +59,7 @@ export default function ArtikelDetailPage() {
       <article className="container mx-auto px-6 md:px-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8">
-            <Link href="/artikel" className="inline-flex items-center gap-2 text-sm font-semibold text-eco-green hover:underline">
+            <Link href="/artikel" className="inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:text-highlight hover:underline">
               <ArrowLeft size={16} />
               Kembali ke Artikel
             </Link>
@@ -111,7 +111,7 @@ export default function ArtikelDetailPage() {
                     <Link
                       key={item.slug}
                       href={`/artikel/${item.slug}`}
-                      className="block rounded-lg border border-slate-200 p-4 transition-colors hover:border-eco-green hover:bg-[#D8F3DC]/20"
+                      className="block rounded-lg border border-slate-200 p-4 transition-colors hover:border-secondary hover:bg-secondary/5"
                     >
                       <p className="text-[11px] tracking-wide font-semibold text-slate-500">{item.category}</p>
                       <h3 className="mt-2 text-base leading-snug font-semibold text-[#1B1B1B]">{item.title}</h3>

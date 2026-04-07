@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { getPublishedArticles, seedArticlesIfNeeded } from "../../lib/articleStore"
 
 export default function ArtikelPage() {
@@ -16,6 +16,14 @@ export default function ArtikelPage() {
   return (
     <main className="w-full py-14">
       <section className="container mx-auto px-6 md:px-8">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-secondary transition-colors hover:text-highlight hover:underline"
+        >
+          <ArrowLeft size={16} />
+          Kembali ke Beranda
+        </Link>
+
         <h1 className="text-3xl md:text-4xl font-extrabold text-forest-emerald">Artikel Pilahin</h1>
         <p className="mt-2 text-slate-600">Kumpulan artikel edukasi, operasional, dan insight keberlanjutan.</p>
 
@@ -38,7 +46,7 @@ export default function ArtikelPage() {
 
                   <Link
                     href={`/artikel/${article.slug}`}
-                    className="mt-5 inline-flex items-center gap-2 text-base font-semibold uppercase tracking-wide text-eco-green"
+                    className="mt-5 inline-flex items-center gap-2 text-base font-semibold uppercase tracking-wide text-secondary transition-colors hover:text-highlight"
                   >
                     Pelajari Lebih Lanjut
                     <ArrowRight size={18} />
