@@ -4,7 +4,7 @@ import PublicFooter from '../components/PublicFooter'
 import ScrollRevealWrapper from '../components/ScrollRevealWrapper'
 
 export const metadata = {
-  title: 'Pilahin - Kelola Sampah Jadi Berkah',
+  title: 'Pilahin - Solusi Cerdas Kelola Sampah',
   description: 'Platform Pilahin untuk layanan pengelolaan sampah yang terstruktur dan modern.',
   icons: {
     icon: '/logo.png',
