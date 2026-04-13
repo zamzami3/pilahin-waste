@@ -12,6 +12,10 @@ export default function PublicHeader() {
   const [user, setUser] = useState(null)
   const pathname = usePathname()
 
+  function triggerMenuReveal() {
+    window.dispatchEvent(new Event("pilahin:menu-click"))
+  }
+
   useEffect(() => {
     // update on mount and when pathname changes (login/redirect)
     setUser(getCurrentUser())
@@ -55,6 +59,7 @@ export default function PublicHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={triggerMenuReveal}
                     aria-current={active ? 'page' : undefined}
                     className={`relative px-0.5 pb-1 text-sm transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-highlight after:origin-center after:transition-transform after:duration-300 after:ease-out ${active ? 'font-semibold text-highlight after:scale-x-100' : 'text-offwhite/85 after:scale-x-0 hover:text-highlight hover:after:scale-x-100'}`}
                   >
@@ -67,12 +72,12 @@ export default function PublicHeader() {
 
           <div className="flex items-center">
             <div className="hidden md:flex items-center space-x-3">
-              <Link href="/login" className="flex items-center gap-2 px-4 py-2 rounded-md text-offwhite hover:bg-secondary/30">
+              <Link
+                href="/login"
+                className="flex items-center gap-2 rounded-md border border-offwhite/20 px-4 py-2 text-offwhite transition-all duration-300 hover:scale-[1.02] hover:border-highlight/80 hover:bg-highlight/20 hover:text-highlight hover:shadow-md"
+              >
                 <LogIn size={16} className="text-highlight" />
-                Masuk
-              </Link>
-              <Link href="/subscribe" className="bg-accent text-offwhite px-4 py-2 rounded-full text-sm font-medium hover:bg-secondary">
-                Mulai Berlangganan
+                Login
               </Link>
             </div>
 
@@ -95,7 +100,10 @@ export default function PublicHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false)
+                    triggerMenuReveal()
+                  }}
                   aria-current={active ? 'page' : undefined}
                   className={`block rounded-md border-b-2 px-2 py-1.5 text-sm transition-all ${active ? 'border-highlight bg-accent font-semibold text-highlight' : 'border-transparent text-offwhite/90 hover:border-highlight/60 hover:bg-secondary/45 hover:text-highlight'}`}
                 >
@@ -104,8 +112,13 @@ export default function PublicHeader() {
               )
             })}
             <div className="pt-2 border-t border-secondary/50 mt-2 flex flex-col gap-2">
-              <Link href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 rounded-md text-offwhite hover:bg-secondary/30"><LogIn size={16} className="text-highlight"/> Masuk</Link>
-              <Link href="/subscribe" className="bg-accent text-offwhite px-4 py-2 rounded-full text-sm font-medium hover:bg-secondary">Mulai Berlangganan</Link>
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-md border border-offwhite/20 px-4 py-2 text-offwhite transition-all duration-300 hover:scale-[1.02] hover:border-highlight/80 hover:bg-highlight/20 hover:text-highlight hover:shadow-md"
+              >
+                <LogIn size={16} className="text-highlight" /> Login
+              </Link>
             </div>
           </nav>
         </div>
