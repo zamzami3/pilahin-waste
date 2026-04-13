@@ -106,12 +106,12 @@ export default function AboutSection() {
         />
         <div className="absolute inset-0 bg-forest-emerald/70" />
         <div className="absolute inset-0 mx-auto flex w-full max-w-7xl items-center px-6 md:px-8">
-          <div className="max-w-3xl text-white">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em]">Tentang Kami</p>
-            <h1 className="text-4xl font-extrabold leading-tight md:text-6xl">
+          <div className="max-w-3xl text-white" data-reveal>
+            <p className="about-hero-kicker mb-4 text-sm font-semibold uppercase tracking-[0.18em]" data-reveal>Tentang Kami</p>
+            <h1 className="about-hero-title text-4xl font-extrabold leading-tight md:text-6xl" data-reveal>
               Pilahin untuk lingkungan yang lebih bersih, terukur, dan berkelanjutan.
             </h1>
-            <p className="mt-5 text-base text-white/90 md:text-lg">
+            <p className="about-hero-copy mt-5 text-base text-white/90 md:text-lg" data-reveal>
               Kami membangun sistem manajemen sampah yang mempertemukan warga, driver, dan admin
               dalam alur layanan yang praktis dan transparan.
             </p>
@@ -120,8 +120,8 @@ export default function AboutSection() {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-20 px-6 py-16 md:px-8 md:py-24">
-        <div className="grid gap-6 md:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+        <div className="about-vision-mission grid gap-6 md:grid-cols-2">
+          <article className="about-card-vision rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
             <div className="mb-4 inline-flex rounded-full bg-forest-emerald/10 p-3 text-forest-emerald">
               <Gift size={22} />
             </div>
@@ -132,7 +132,7 @@ export default function AboutSection() {
             </p>
           </article>
 
-          <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <article className="about-card-mission rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
             <div className="mb-4 inline-flex rounded-full bg-eco-green/10 p-3 text-eco-green">
               <Users size={22} />
             </div>

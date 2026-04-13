@@ -84,3 +84,81 @@ html, body {
   font-size: 0.95rem;
   letter-spacing: 0.04em;
 }
+
+.about-hero-kicker.scroll-reveal {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+}
+
+.about-hero-title.scroll-reveal {
+  opacity: 0;
+  transform: translateX(-56px);
+  transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 760ms ease;
+}
+
+.about-hero-copy.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+}
+
+.about-hero-kicker.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.about-hero-title.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.about-hero-copy.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.about-vision-mission.scroll-reveal {
+  transform: translateY(24px);
+  transition-duration: 540ms;
+}
+
+.about-vision-mission.scroll-reveal.reveal-visible {
+  transform: translateY(0);
+}
+
+.about-card-vision.scroll-reveal,
+.about-card-mission.scroll-reveal {
+  opacity: 0;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+}
+
+.about-card-vision.scroll-reveal {
+  transform: translateX(-64px);
+}
+
+.about-card-mission.scroll-reveal {
+  transform: translateX(64px);
+}
+
+.about-card-vision.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.about-card-mission.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-hero-kicker.scroll-reveal,
+  .about-hero-title.scroll-reveal,
+  .about-hero-copy.scroll-reveal,
+  .about-card-vision.scroll-reveal,
+  .about-card-mission.scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

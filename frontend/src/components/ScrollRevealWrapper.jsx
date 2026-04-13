@@ -1,11 +1,21 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 
 export default function ScrollRevealWrapper({ children, className = "" }) {
   const rootRef = useRef(null)
   const pathname = usePathname()
+  const [menuClickTick, setMenuClickTick] = useState(0)
+
+  useEffect(() => {
+    const handleMenuClick = () => setMenuClickTick((prev) => prev + 1)
+    window.addEventListener("pilahin:menu-click", handleMenuClick)
+
+    return () => {
+      window.removeEventListener("pilahin:menu-click", handleMenuClick)
+    }
+  }, [])
 
   useEffect(() => {
     const root = rootRef.current
@@ -30,11 +40,17 @@ export default function ScrollRevealWrapper({ children, className = "" }) {
 
     const galleryElements = elements.filter((el) => el.classList.contains("gallery-tile"))
 
-    elements.forEach((el) => {
-      const rect = el.getBoundingClientRect()
-      if (rect.top <= window.innerHeight * 0.9) {
-        el.classList.add("reveal-visible")
-      }
+    // Defer initial reveal so the browser can paint initial states first,
+    // making directional transitions consistently visible.
+    const rafOne = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        elements.forEach((el) => {
+          const rect = el.getBoundingClientRect()
+          if (rect.top <= window.innerHeight * 0.9) {
+            el.classList.add("reveal-visible")
+          }
+        })
+      })
     })
 
     const updateGalleryProgress = () => {
@@ -81,11 +97,12 @@ export default function ScrollRevealWrapper({ children, className = "" }) {
       .forEach((el) => observer.observe(el))
 
     return () => {
+      window.cancelAnimationFrame(rafOne)
       observer.disconnect()
       window.removeEventListener("scroll", updateGalleryProgress)
       window.removeEventListener("resize", updateGalleryProgress)
     }
-  }, [pathname])
+  }, [pathname, menuClickTick])
 
   return (
     <div ref={rootRef} className={className}>
