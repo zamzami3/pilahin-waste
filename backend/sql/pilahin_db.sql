@@ -111,7 +111,7 @@ INSERT INTO users (nama, email, password, no_wa, role, alamat, lat_long, saldo_p
 VALUES
   (
     'Warga 1',
-    'warga1@example.com',
+    'warga@example.com',
     -- password: warga123
     '$2b$10$LfkvgR2Ej4WnSBAZfnfD4uciq8GbU25Ps277PF0vDhSJypkhSZoXa',
     '081234567890',
