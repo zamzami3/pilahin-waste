@@ -4,7 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowUpRight, Eye, EyeOff, LogIn } from "lucide-react"
-import { loginUser } from '../../lib/mockAuth'
+import { login, goToRoleHome } from "../../lib/authApi"
+import { extractApiError } from "../../lib/apiClient"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,21 +14,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
 
-  function goToRoleHome(role) {
-    if (role === 'warga') return '/warga'
-    if (role === 'driver') return '/driver/tasks'
-    if (role === 'admin') return '/admin'
-    return '/'
-  }
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError("")
     try {
-      const user = loginUser(email.trim(), password)
-      router.push(goToRoleHome(user.role))
+      const response = await login(email.trim(), password)
+      router.push(goToRoleHome(response?.user?.role))
     } catch (err) {
-      setError(err.message || 'Gagal login')
+      setError(extractApiError(err, 'Gagal login'))
     }
   }
 

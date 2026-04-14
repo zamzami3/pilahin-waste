@@ -1,6 +1,9 @@
+"use client"
+
 import DashboardSidebar from '../../components/DashboardSidebar'
 import ClientErrorBoundary from '../../components/ClientErrorBoundary'
 import ScrollRevealWrapper from '../../components/ScrollRevealWrapper'
+import RoleGuard from '../../components/RoleGuard'
 
 const ROLE_THEME = {
   warga: 'bg-mint-soft text-forest-emerald',
@@ -16,15 +19,17 @@ export default function RoleLayout({ children, params }) {
   const role = normalizeRole(params?.role)
 
   return (
-    <div className={`min-h-screen ${ROLE_THEME[role]}`}>
-      <DashboardSidebar role={role} />
-      <div className="md:ml-64">
-        <ClientErrorBoundary>
-          <main className="container mx-auto p-6">
-            <ScrollRevealWrapper>{children}</ScrollRevealWrapper>
-          </main>
-        </ClientErrorBoundary>
+    <RoleGuard role={role}>
+      <div className={`min-h-screen ${ROLE_THEME[role]}`}>
+        <DashboardSidebar role={role} />
+        <div className="md:ml-64">
+          <ClientErrorBoundary>
+            <main className="container mx-auto p-6">
+              <ScrollRevealWrapper>{children}</ScrollRevealWrapper>
+            </main>
+          </ClientErrorBoundary>
+        </div>
       </div>
-    </div>
+    </RoleGuard>
   )
 }

@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowUpRight, Eye, EyeOff, UserPlus } from "lucide-react"
-import { ensureDefaults, registerUser } from '../../lib/mockAuth'
+import { register } from "../../lib/authApi"
+import { extractApiError } from "../../lib/apiClient"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -14,18 +15,19 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    ensureDefaults()
-  }, [])
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError("")
     try {
-      registerUser({ name: name.trim(), email: email.trim(), password, role: 'warga' })
-      router.push('/warga')
+      await register({
+        nama: name.trim(),
+        email: email.trim(),
+        password,
+        role: 'warga',
+      })
+      router.push('/login')
     } catch (err) {
-      setError(err.message || 'Gagal registrasi')
+      setError(extractApiError(err, 'Gagal registrasi'))
     }
   }
 
