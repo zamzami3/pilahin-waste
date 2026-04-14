@@ -92,9 +92,15 @@ const login = async (req, res) => {
       });
     }
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        message: 'JWT_SECRET belum dikonfigurasi di environment',
+      });
+    }
+
     const token = jwt.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET || 'pilahin_secret_dev',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
 
@@ -116,7 +122,59 @@ const login = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, nama, email, role, no_wa, alamat, lat_long, saldo_poin, created_at
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: 'User tidak ditemukan',
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Token valid',
+      user: rows[0],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Terjadi kesalahan saat mengambil profil user',
+      error: error.message,
+    });
+  }
+};
+
+const getMyPointHistory = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, jumlah_poin, tipe, keterangan, created_at
+       FROM point_history
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    return res.status(200).json({
+      message: 'Riwayat poin berhasil diambil',
+      data: rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Terjadi kesalahan saat mengambil riwayat poin',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
+  getMe,
+  getMyPointHistory,
 };

@@ -5,6 +5,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS point_history;
 DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS schedule_requests;
 DROP TABLE IF EXISTS pickups;
 DROP TABLE IF EXISTS users;
 
@@ -56,6 +57,34 @@ CREATE TABLE subscriptions (
     ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE schedule_requests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  warga_id INT UNSIGNED NOT NULL,
+  assigned_driver_id INT UNSIGNED NULL,
+  requested_day ENUM('Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') NOT NULL,
+  requested_time CHAR(5) NOT NULL,
+  approved_day ENUM('Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') NULL,
+  approved_time CHAR(5) NULL,
+  suggested_day ENUM('Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') NULL,
+  suggested_time CHAR(5) NULL,
+  approval_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  pickup_status ENUM('pending', 'otw', 'done') NOT NULL DEFAULT 'pending',
+  catatan TEXT,
+  admin_note TEXT,
+  weight_kg DECIMAL(10,2) DEFAULT 0.00,
+  earned_points INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_schedule_requests_warga
+    FOREIGN KEY (warga_id) REFERENCES users(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+  CONSTRAINT fk_schedule_requests_driver
+    FOREIGN KEY (assigned_driver_id) REFERENCES users(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE point_history (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
@@ -72,6 +101,10 @@ CREATE TABLE point_history (
 CREATE INDEX idx_pickups_warga_id ON pickups (warga_id);
 CREATE INDEX idx_pickups_driver_id ON pickups (driver_id);
 CREATE INDEX idx_subscriptions_user_id ON subscriptions (user_id);
+CREATE INDEX idx_schedule_requests_warga_id ON schedule_requests (warga_id);
+CREATE INDEX idx_schedule_requests_driver_id ON schedule_requests (assigned_driver_id);
+CREATE INDEX idx_schedule_requests_approval_status ON schedule_requests (approval_status);
+CREATE INDEX idx_schedule_requests_pickup_status ON schedule_requests (pickup_status);
 CREATE INDEX idx_point_history_user_id ON point_history (user_id);
 
 INSERT INTO users (nama, email, password, no_wa, role, alamat, lat_long, saldo_poin)
