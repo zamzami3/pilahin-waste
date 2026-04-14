@@ -13,6 +13,7 @@ import {
   Clipboard,
   Map,
   Clock,
+  Layers,
   BarChart2,
   Users,
   User,
@@ -22,7 +23,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
-import { logout } from "../lib/mockAuth"
+import { logout } from "../lib/authApi"
 
 export default function DashboardSidebar({ role = "warga" }) {
   const [open, setOpen] = useState(false)
@@ -39,12 +40,13 @@ export default function DashboardSidebar({ role = "warga" }) {
     ],
     driver: [
       { label: "Dashboard", href: "/driver", icon: Home },
-      { label: "Tugas Hari Ini", href: "/driver/tasks", icon: Clipboard },
+      { label: "Tugas Minggu Ini", href: "/driver/tasks", icon: Clipboard },
       { label: "Peta Rute", href: "/driver/map", icon: Map },
       { label: "Riwayat Kerja", href: "/driver/history", icon: Clock },
     ],
     admin: [
       { label: "Dashboard", href: "/admin", icon: Home },
+      { label: "Pengajuan", href: "/admin/pengajuan", icon: Layers },
       { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
       { label: "Manajemen User", href: "/admin/users", icon: Users },
       { label: "Armada", href: "/admin/armada", icon: Truck },
@@ -65,7 +67,6 @@ export default function DashboardSidebar({ role = "warga" }) {
   }, null)
 
   async function handleLogout() {
-    // clear mock auth and redirect to login (robust fallback)
     try {
       logout()
     } catch (e) {

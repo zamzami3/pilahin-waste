@@ -1,138 +1,97 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { MapPin, Navigation, CheckCircle2, Clock3, X, User, Camera } from "lucide-react"
-import FilePicker from "../../../components/FilePicker"
-import { initialTasks } from "../initialTasks"
+import { useEffect, useMemo, useState } from "react"
+import { CheckCircle2, Clock3, MapPin, Navigation, X } from "lucide-react"
+import { apiClient, extractApiError } from "../../../lib/apiClient"
 
-function statusLabel(s) {
-  if (s === "pending") return "Pending"
-  if (s === "on-process") return "On-Process"
-  if (s === "done") return "Done"
-  return s
-}
-
-function badgeClass(s) {
-  if (s === "pending") return "bg-amber-100 text-amber-700 border border-amber-200"
-  if (s === "on-process") return "bg-emerald-100 text-emerald-700 border border-emerald-200"
-  if (s === "done") return "bg-slate-100 text-slate-700 border border-slate-200"
-  return "bg-slate-100 text-slate-700 border border-slate-200"
+function statusBadge(status) {
+  if (status === "done") return "bg-emerald-100 text-emerald-700"
+  if (status === "otw") return "bg-sky-100 text-sky-700"
+  return "bg-amber-100 text-amber-700"
 }
 
 export default function DriverTasksPage() {
-  const [tasks, setTasks] = useState(initialTasks)
-  const [activeTask, setActiveTask] = useState(null)
-  const [showFinishModal, setShowFinishModal] = useState(false)
+  const [tasks, setTasks] = useState([])
+  const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [modalTask, setModalTask] = useState(null)
   const [weight, setWeight] = useState("")
-  const [proofPhotoName, setProofPhotoName] = useState("")
-  const [toastMessage, setToastMessage] = useState("")
+
+  async function loadTasks() {
+    try {
+      const { data } = await apiClient.get("/schedules/driver/week")
+      setTasks(Array.isArray(data?.data) ? data.data : [])
+    } catch (error) {
+      setMessage(extractApiError(error, "Gagal mengambil tugas minggu ini"))
+    }
+  }
 
   useEffect(() => {
-    if (!toastMessage) return
-    const id = window.setTimeout(() => setToastMessage(""), 2800)
-    return () => window.clearTimeout(id)
-  }, [toastMessage])
+    loadTasks()
+  }, [])
 
-  const pendingCount = tasks.filter((task) => task.status === "pending").length
-  const onProcessCount = tasks.filter((task) => task.status === "on-process").length
+  const pendingCount = useMemo(() => tasks.filter((task) => task.pickup_status === "pending").length, [tasks])
+  const otwCount = useMemo(() => tasks.filter((task) => task.pickup_status === "otw").length, [tasks])
+
+  async function setTaskStatus(taskId, pickupStatus, payload = {}) {
+    setLoading(true)
+    try {
+      await apiClient.put(`/schedules/driver/${taskId}/status`, {
+        pickup_status: pickupStatus,
+        ...payload,
+      })
+      setMessage(pickupStatus === "otw" ? "Status tugas diperbarui ke Otw." : "Tugas selesai dan poin warga diperbarui.")
+      await loadTasks()
+    } catch (error) {
+      setMessage(extractApiError(error, "Gagal memperbarui status tugas"))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   function openMap(task) {
-    const destination = `${task.lat},${task.lng}`
-    const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
+    const query = encodeURIComponent(task.warga_alamat || task.warga_nama || "")
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${query}`
     window.open(mapUrl, "_blank", "noopener,noreferrer")
-  }
-
-  function startPickup(taskId) {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status: "on-process",
-            }
-          : task
-      )
-    )
-    setToastMessage("Penjemputan dimulai. Status tugas menjadi On-Process.")
-  }
-
-  function openFinishModal(task) {
-    setActiveTask(task)
-    setWeight(task.weight ? String(task.weight) : "")
-    setProofPhotoName(task.proofPhotoName || "")
-    setShowFinishModal(true)
-  }
-
-  function closeFinishModal() {
-    setShowFinishModal(false)
-    setActiveTask(null)
-    setWeight("")
-    setProofPhotoName("")
-  }
-
-  function completePickup() {
-    if (!activeTask) return
-    const w = parseFloat(weight)
-
-    if (isNaN(w) || w <= 0) {
-      alert("Masukkan berat yang valid (kg)")
-      return
-    }
-
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === activeTask.id
-          ? {
-              ...task,
-              status: "done",
-              weight: w,
-              proofPhotoName,
-            }
-          : task
-      )
-    )
-
-    setToastMessage(`Tugas ${activeTask.name} selesai. Data berhasil disimpan.`)
-    closeFinishModal()
   }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <header className="rounded-2xl border border-eco-green/20 bg-gradient-to-r from-mint-soft/50 to-white p-5">
+      <header className="rounded-2xl border border-eco-green/20 bg-white p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold text-forest-emerald">Tugas Hari Ini</h1>
-          <div className="text-sm text-slate-600">{pendingCount} Pending - {onProcessCount} On-Process</div>
+          <h1 className="text-2xl font-semibold text-forest-emerald">Tugas Minggu Ini</h1>
+          <div className="text-sm text-slate-600">{pendingCount} Pending - {otwCount} Otw</div>
         </div>
-        <p className="mt-1 text-sm text-slate-600">Kelola penjemputan harian dan selesaikan tugas dengan bukti setoran.</p>
+        <p className="mt-1 text-sm text-slate-600">Driver hanya bisa menandai Otw satu rumah dalam satu waktu. Selesaikan tugas sebelumnya sebelum lanjut.</p>
+        {message && <div className="mt-3 rounded-md bg-eco-green/10 text-eco-green px-3 py-2 text-sm">{message}</div>}
       </header>
 
       <section className="mt-5 grid grid-cols-1 gap-4">
         {tasks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
-            Belum ada daftar penjemputan untuk hari ini.
+            Belum ada penugasan minggu ini.
           </div>
         ) : (
           tasks.map((task) => (
             <article key={task.id} className="rounded-xl border border-eco-green/15 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 rounded-lg bg-eco-green/10 p-2 text-eco-green">
-                    <User size={20} />
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-forest-emerald">{task.warga_nama}</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                    <span>{task.approved_day || task.requested_day}</span>
+                    <span>-</span>
+                    <span>{task.approved_time || task.requested_time}</span>
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusBadge(task.pickup_status)}`}>
+                      {task.pickup_status}
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-forest-emerald">{task.name}</h2>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-sm text-slate-600">{task.address}</p>
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${badgeClass(task.status)}`}>
-                        {statusLabel(task.status)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">{task.note}</p>
-                    <p className="mt-1 text-xs text-slate-500">Lat/Lng: {task.lat.toFixed(6)}, {task.lng.toFixed(6)}</p>
-                    {task.status === "done" && (
-                      <p className="mt-1 text-xs text-emerald-700">Berat tercatat: {task.weight} kg{task.proofPhotoName ? ` - Bukti: ${task.proofPhotoName}` : ""}</p>
-                    )}
-                  </div>
+                  <p className="mt-1 text-sm text-slate-500">{task.warga_alamat || "Alamat belum tersedia"}</p>
+                  {task.catatan && <p className="mt-1 text-xs text-slate-500">Catatan warga: {task.catatan}</p>}
+                  {task.pickup_status === "done" && (
+                    <p className="mt-1 text-xs text-emerald-700">
+                      Selesai - berat: {Number(task.weight_kg || 0) > 0 ? `${task.weight_kg} kg` : "default"}, poin: {task.earned_points}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex w-full flex-col gap-2 md:w-56">
@@ -144,27 +103,32 @@ export default function DriverTasksPage() {
                     Buka Map
                   </button>
 
-                  {task.status === "pending" && (
+                  {task.pickup_status === "pending" && (
                     <button
-                      onClick={() => startPickup(task.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
+                      onClick={() => setTaskStatus(task.id, "otw")}
+                      disabled={loading}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       <Clock3 size={16} />
-                      Mulai Jemput
+                      Tandai Otw
                     </button>
                   )}
 
-                  {task.status === "on-process" && (
+                  {task.pickup_status === "otw" && (
                     <button
-                      onClick={() => openFinishModal(task)}
-                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
+                      onClick={() => {
+                        setModalTask(task)
+                        setWeight("")
+                      }}
+                      disabled={loading}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-eco-green px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       <CheckCircle2 size={16} />
                       Selesaikan
                     </button>
                   )}
 
-                  {task.status === "done" && (
+                  {task.pickup_status === "done" && (
                     <div className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
                       <CheckCircle2 size={16} />
                       Tugas Selesai
@@ -177,12 +141,12 @@ export default function DriverTasksPage() {
         )}
       </section>
 
-      {showFinishModal && activeTask && (
+      {modalTask && (
         <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-          <div className="absolute inset-0 bg-black/45" onClick={closeFinishModal} />
-          <div className="relative z-[60] m-4 w-full max-w-xl rounded-t-xl bg-white p-5 shadow-xl md:rounded-xl md:p-6">
+          <div className="absolute inset-0 bg-black/45" onClick={() => setModalTask(null)} />
+          <div className="relative z-[60] m-4 w-full max-w-lg rounded-t-xl bg-white p-5 shadow-xl md:rounded-xl md:p-6">
             <button
-              onClick={closeFinishModal}
+              onClick={() => setModalTask(null)}
               className="absolute right-3 top-3 rounded p-2 text-slate-500 hover:bg-slate-100"
               aria-label="Tutup modal"
             >
@@ -195,66 +159,45 @@ export default function DriverTasksPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-forest-emerald">Selesaikan Penjemputan</h3>
-                <p className="text-sm text-slate-600">{activeTask.name} - {activeTask.address}</p>
+                <p className="text-sm text-slate-600">{modalTask.warga_nama} - {modalTask.warga_alamat || "Alamat belum tersedia"}</p>
               </div>
             </div>
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Berat Sampah (kg)</label>
+                <label className="mb-1 block text-sm text-slate-700">Berat Sampah (kg) - opsional</label>
                 <input
                   type="number"
                   value={weight}
                   onChange={(event) => setWeight(event.target.value)}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-eco-green focus:outline-none"
-                  placeholder="Contoh: 3.5"
+                  placeholder="Kosongkan untuk poin default 2"
                   min="0"
                   step="0.1"
                 />
-              </div>
-
-              <div>
-                <div className="mb-1 flex items-center gap-2 text-sm text-slate-700">
-                  <Camera size={16} />
-                  Upload/Pilih Foto Bukti (simulasi)
-                </div>
-                <FilePicker
-                  label=""
-                  accept="image/*"
-                  onFileChange={(event) => {
-                    const selectedFile = event?.target?.files?.[0]
-                    setProofPhotoName(selectedFile ? selectedFile.name : "")
-                  }}
-                />
-                <p className="mt-2 text-xs text-slate-500">Foto hanya simulasi untuk antarmuka dan tidak diunggah ke server.</p>
+                <p className="mt-1 text-xs text-slate-500">Jika berat diisi, poin = berat x 3. Jika kosong, poin default = 2.</p>
               </div>
 
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
-                  onClick={closeFinishModal}
+                  onClick={() => setModalTask(null)}
                   className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
                 >
                   Batal
                 </button>
                 <button
-                  onClick={completePickup}
-                  className="rounded-md bg-eco-green px-4 py-2 text-sm font-semibold text-white hover:brightness-95"
+                  onClick={() => {
+                    const parsed = Number(weight)
+                    const payload = Number.isFinite(parsed) && parsed > 0 ? { weight_kg: parsed } : {}
+                    setTaskStatus(modalTask.id, "done", payload)
+                    setModalTask(null)
+                  }}
+                  className="rounded-md bg-eco-green px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  disabled={loading}
                 >
                   Simpan & Selesaikan
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toastMessage && (
-        <div className="fixed bottom-4 right-4 z-[70] w-[calc(100%-2rem)] max-w-sm rounded-lg border border-emerald-200 bg-emerald-50 p-3 shadow-lg">
-          <div className="flex items-start gap-2">
-            <CheckCircle2 size={18} className="mt-0.5 text-emerald-700" />
-            <div>
-              <p className="text-sm font-medium text-emerald-800">Sukses</p>
-              <p className="text-sm text-emerald-700">{toastMessage}</p>
             </div>
           </div>
         </div>

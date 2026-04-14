@@ -1,205 +1,197 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { getCurrentUser, saveCurrentUser } from "../../../lib/mockAuth"
-import { Calendar } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { CalendarDays } from "lucide-react"
+import { apiClient, extractApiError } from "../../../lib/apiClient"
 
 const DAYS_ORDER = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-const NAME_TO_INDEX = { Minggu: 0, Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6 }
 
-function getPickupDaysFromUser(user) {
-  if (!user) return []
-  if (Array.isArray(user.pickupDays) && user.pickupDays.length) return user.pickupDays
-  return []
+function statusBadge(status) {
+  if (status === "approved") return "bg-emerald-100 text-emerald-700"
+  if (status === "rejected") return "bg-red-100 text-red-700"
+  return "bg-amber-100 text-amber-700"
 }
 
-function computeNextPickupDate(pickupDays) {
-  const now = new Date()
-  const todayIndex = now.getDay() // 0..6 (Sun..Sat)
-  const indices = pickupDays.map((d) => NAME_TO_INDEX[d] ?? 0)
-  let best = null
-  for (const idx of indices) {
-    let daysUntil = (idx - todayIndex + 7) % 7
-    const candidate = new Date(now)
-    candidate.setDate(now.getDate() + daysUntil)
-    // assume pickup at 08:00
-    candidate.setHours(8, 0, 0, 0)
-    if (candidate <= now) {
-      candidate.setDate(candidate.getDate() + 7)
-    }
-    if (!best || candidate < best) best = candidate
-  }
-  return best
-}
-
-function formatRelative(ms) {
-  const s = Math.floor(ms / 1000)
-  const m = Math.floor(s / 60)
-  const h = Math.floor(m / 60)
-  const d = Math.floor(h / 24)
-  if (d > 0) return `${d} hari lagi`
-  if (h > 0) return `${h} jam lagi`
-  if (m > 0) return `${m} menit lagi`
-  return `Beberapa saat lagi`
+function pickupBadge(status) {
+  if (status === "done") return "bg-emerald-100 text-emerald-700"
+  if (status === "otw") return "bg-sky-100 text-sky-700"
+  return "bg-slate-100 text-slate-700"
 }
 
 export default function JadwalPage() {
-  const [user, setUser] = useState(null)
-  const [pickupDays, setPickupDays] = useState([])
-  const [nextPickup, setNextPickup] = useState(null)
-  const [timeLeft, setTimeLeft] = useState("")
-  const [reminderEnabled, setReminderEnabled] = useState(false)
+  const [requestedDay, setRequestedDay] = useState("Senin")
+  const [requestedTime, setRequestedTime] = useState("08:00")
+  const [catatan, setCatatan] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [rows, setRows] = useState([])
   const [message, setMessage] = useState(null)
 
-  useEffect(() => {
-    const u = getCurrentUser()
-    setUser(u)
-    const days = getPickupDaysFromUser(u)
-    setPickupDays(days)
-    const next = computeNextPickupDate(days)
-    setNextPickup(next)
-
-    if (u) {
-      const key = `pilahin_whatsapp_reminder_${u.id}`
-      const val = localStorage.getItem(key)
-      setReminderEnabled(val === "true")
+  async function loadMySchedules() {
+    try {
+      const { data } = await apiClient.get("/schedules/me")
+      setRows(Array.isArray(data?.data) ? data.data : [])
+    } catch (error) {
+      setMessage({ type: "error", text: extractApiError(error, "Gagal mengambil data jadwal") })
     }
+  }
+
+  useEffect(() => {
+    loadMySchedules()
   }, [])
 
-  useEffect(() => {
-    if (!nextPickup) return
-    const tick = () => {
-      const now = new Date()
-      const diff = nextPickup - now
-      if (diff <= 0) {
-        setTimeLeft("Sedang berlangsung")
-      } else {
-        setTimeLeft(formatRelative(diff))
-      }
-    }
-    tick()
-    const id = setInterval(tick, 60000)
-    return () => clearInterval(id)
-  }, [nextPickup])
+  const approvedThisWeek = useMemo(
+    () => rows.filter((row) => row.approval_status === "approved"),
+    [rows]
+  )
 
-  function toggleReminder() {
-    if (!user) return
-    const key = `pilahin_whatsapp_reminder_${user.id}`
-    const next = !reminderEnabled
-    setReminderEnabled(next)
-    localStorage.setItem(key, String(next))
-  }
+  async function submitSchedule(event) {
+    event.preventDefault()
+    setLoading(true)
+    setMessage(null)
 
-  function togglePickupDay(day) {
-    setPickupDays((prev) => {
-      if (prev.includes(day)) return prev.filter((d) => d !== day)
-      return [...prev, day]
-    })
-  }
-
-  function savePickupSchedule() {
-    if (!user) {
-      setMessage({ type: "error", text: "Silakan login terlebih dahulu." })
-      return
-    }
-
-    const sorted = [...pickupDays].sort((a, b) => DAYS_ORDER.indexOf(a) - DAYS_ORDER.indexOf(b))
-    const updatedUser = { ...user, pickupDays: sorted }
     try {
-      saveCurrentUser(updatedUser)
-      setUser(updatedUser)
-      const next = computeNextPickupDate(sorted)
-      setNextPickup(next)
-      setMessage({ type: "success", text: "Jadwal penjemputan berhasil diajukan." })
-    } catch (e) {
-      setMessage({ type: "error", text: "Gagal menyimpan jadwal penjemputan." })
+      await apiClient.post("/schedules", {
+        requested_day: requestedDay,
+        requested_time: requestedTime,
+        catatan: catatan.trim() || null,
+      })
+
+      setCatatan("")
+      setMessage({ type: "success", text: "Pengajuan jadwal berhasil dikirim ke admin." })
+      await loadMySchedules()
+    } catch (error) {
+      setMessage({ type: "error", text: extractApiError(error, "Pengajuan jadwal gagal dikirim") })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen p-4 md:p-6 bg-mint-soft">
       <header className="max-w-5xl mx-auto mb-6">
-        <h1 className="text-2xl font-semibold text-forest-emerald">Jadwal Penjemputan Saya</h1>
-        <p className="text-sm text-slate-700">Ajukan dan kelola jadwal penjemputan sesuai kebutuhan Anda.</p>
+        <h1 className="text-2xl font-semibold text-forest-emerald">Pengajuan Jadwal Penjemputan</h1>
+        <p className="text-sm text-slate-700">Ajukan hari dan jam penjemputan. Admin akan menyetujui atau memberi saran jadwal baru bila overload.</p>
 
         {message && (
           <div className={`mt-3 p-3 rounded-md ${message.type === "success" ? "bg-eco-green/10 text-eco-green" : "bg-red-100 text-red-700"}`}>
             {message.text}
           </div>
         )}
-
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <Calendar size={20} className="text-eco-green" />
-              <div>
-                <div className="text-sm text-slate-500">Paket Langganan</div>
-                <div className="font-semibold text-forest-emerald">{user?.paket ?? "Belum Berlangganan"}</div>
-                <div className="text-xs text-slate-500">Hari aktif: {pickupDays.length ? pickupDays.join(", ") : "Belum ada"}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-sm text-slate-500">Penjemputan Berikutnya</div>
-            <div className="mt-1">
-              <div className="text-xl font-semibold text-forest-emerald">{nextPickup ? new Date(nextPickup).toLocaleString("id-ID", { weekday: "long", day: "numeric", month: "short" }) : "Belum ada jadwal"}</div>
-              <div className="text-sm text-slate-600">{nextPickup ? timeLeft : "Ajukan jadwal terlebih dahulu"}</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 shadow-sm flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500">Pengingat WhatsApp</div>
-              <div className="text-sm text-slate-600">Aktifkan pengingat via Fonnte (UI saja)</div>
-            </div>
-
-            <div>
-              <label className="inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={reminderEnabled} onChange={toggleReminder} />
-                <div className="w-11 h-6 bg-slate-200 rounded-full peer-checked:bg-eco-green peer-focus:ring-2 peer-focus:ring-eco-green/30 transition" />
-              </label>
-            </div>
-          </div>
-        </div>
       </header>
 
-      <main className="max-w-5xl mx-auto">
-        <section>
-          <h2 className="text-lg font-semibold mb-3 text-forest-emerald">Minggu Ini</h2>
-          <div className="grid grid-cols-7 gap-2 text-center">
-            {DAYS_ORDER.map((day) => {
-              const active = pickupDays.includes(day)
-              return (
-                <div key={day} className={`py-3 rounded-lg ${active ? "bg-eco-green text-white" : "bg-white text-slate-700"} shadow-sm`}>
-                  <div className="font-medium">{day}</div>
-                  {active && <div className="text-xs mt-1">Penjemputan</div>}
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-6">
-            <h3 className="text-base font-semibold text-forest-emerald">Ajukan Jadwal Penjemputan</h3>
-            <p className="text-sm text-slate-600 mt-1">Pilih hari yang Anda inginkan, lalu simpan pengajuan jadwal.</p>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {DAYS_ORDER.map((day) => {
-                const selected = pickupDays.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => togglePickupDay(day)}
-                    className={`px-3 py-2 rounded-md border text-sm ${selected ? "bg-eco-green text-white border-eco-green" : "bg-white text-slate-700 border-slate-300"}`}
-                  >
-                    {day}
-                  </button>
-                )
-              })}
+      <main className="max-w-5xl mx-auto space-y-6">
+        <section className="bg-white rounded-xl p-5 shadow-sm border border-eco-green/15">
+          <h2 className="text-lg font-semibold text-forest-emerald">Ajukan Jadwal Baru</h2>
+          <form onSubmit={submitSchedule} className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Hari</label>
+              <select
+                value={requestedDay}
+                onChange={(e) => setRequestedDay(e.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2"
+              >
+                {DAYS_ORDER.map((day) => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
             </div>
 
-            <button onClick={savePickupSchedule} className="mt-4 px-4 py-2 rounded-md bg-eco-green text-white font-semibold">Simpan Jadwal</button>
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Jam</label>
+              <input
+                type="time"
+                value={requestedTime}
+                onChange={(e) => setRequestedTime(e.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-sm text-slate-600 mb-1">Catatan (opsional)</label>
+              <textarea
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                rows={3}
+                className="w-full rounded-md border border-slate-300 px-3 py-2"
+                placeholder="Contoh: akses masuk lewat gang sebelah kiri"
+              />
+            </div>
+
+            <div className="md:col-span-3 flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 rounded-md bg-eco-green text-white font-semibold disabled:opacity-60"
+              >
+                {loading ? "Menyimpan..." : "Ajukan Jadwal"}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="bg-white rounded-xl p-5 shadow-sm border border-eco-green/15">
+          <h2 className="text-lg font-semibold text-forest-emerald">Jadwal Disetujui</h2>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {approvedThisWeek.length === 0 ? (
+              <div className="text-sm text-slate-500">Belum ada jadwal yang disetujui admin.</div>
+            ) : (
+              approvedThisWeek.map((row) => (
+                <div key={row.id} className="rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-center gap-2 text-forest-emerald font-semibold">
+                    <CalendarDays size={16} />
+                    {row.approved_day} - {row.approved_time}
+                  </div>
+                  <div className="mt-2 text-sm text-slate-600">Status penjemputan: <span className={`px-2 py-0.5 rounded-full text-xs ${pickupBadge(row.pickup_status)}`}>{row.pickup_status}</span></div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="bg-white rounded-xl p-5 shadow-sm border border-eco-green/15">
+          <h2 className="text-lg font-semibold text-forest-emerald">Riwayat Pengajuan</h2>
+          <div className="mt-3 space-y-3">
+            {rows.length === 0 ? (
+              <div className="text-sm text-slate-500">Belum ada riwayat pengajuan jadwal.</div>
+            ) : (
+              rows.map((row) => (
+                <article key={row.id} className="rounded-lg border border-slate-200 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-forest-emerald">{row.requested_day} - {row.requested_time}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${statusBadge(row.approval_status)}`}>
+                      {row.approval_status}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${pickupBadge(row.pickup_status)}`}>
+                      {row.pickup_status}
+                    </span>
+                  </div>
+
+                  {row.approval_status === "approved" && (
+                    <p className="mt-2 text-sm text-slate-700">
+                      Jadwal disetujui admin pada {row.approved_day || row.requested_day} pukul {row.approved_time || row.requested_time}.
+                    </p>
+                  )}
+
+                  {row.approval_status === "rejected" && (
+                    <p className="mt-2 text-sm text-red-700">
+                      Admin tidak menyetujui penjemputan pada hari ini karena overload.
+                      {row.suggested_day && row.suggested_time
+                        ? ` Jadwal Hari dan Waktu yang tersedia ada pada Hari ${row.suggested_day} Pukul ${row.suggested_time}.`
+                        : " Silakan ajukan ulang jadwal lain."}
+                    </p>
+                  )}
+
+                  {row.admin_note && (
+                    <p className="mt-1 text-sm text-slate-600">Catatan Admin: {row.admin_note}</p>
+                  )}
+
+                  {row.catatan && (
+                    <p className="mt-1 text-xs text-slate-500">Catatan Warga: {row.catatan}</p>
+                  )}
+                </article>
+              ))
+            )}
           </div>
         </section>
       </main>

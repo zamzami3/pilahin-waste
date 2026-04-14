@@ -123,7 +123,7 @@ export default function DriverDashboard() {
         <article className="xl:col-span-2 rounded-xl border border-eco-green/20 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-2 text-forest-emerald">
             <Activity size={CARD_ICON_SIZE} />
-            <h2 className="text-base font-semibold">Tugas Aktif Saat Ini</h2>
+            <h2 className="text-base font-semibold">Tugas Aktif Hari Ini</h2>
           </div>
 
           {currentActiveTask ? (
